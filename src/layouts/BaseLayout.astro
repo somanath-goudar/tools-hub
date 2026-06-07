@@ -1,0 +1,75 @@
+---
+import { CLUSTERS } from '../data/tools';
+
+export interface Props {
+  title: string;
+  description: string;
+  /** Path-only canonical, e.g. "/statistics/t-test-calculator". */
+  path: string;
+  /** Optional JSON-LD objects to inject. */
+  jsonLd?: Record<string, unknown>[];
+  emoji?: string;
+}
+
+const { title, description, path, jsonLd = [], emoji = '🧮' } = Astro.props;
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${site}${path}`;
+const favicon = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${emoji}</text></svg>`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href={favicon} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    {jsonLd.map((obj) => (
+      <script type="application/ld+json" set:html={JSON.stringify(obj)} />
+    ))}
+
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav container">
+        <a href="/" class="brand">🧮 ToolHub</a>
+        <div class="nav-links">
+          {CLUSTERS.map((c) => (
+            <a href={`/${c.slug}/`}>{c.emoji} {c.name}</a>
+          ))}
+        </div>
+      </nav>
+    </header>
+
+    <main class="container">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>
+          {CLUSTERS.map((c) => (
+            <a href={`/${c.slug}/`}>{c.name}</a>
+          ))}
+        </p>
+        <p class="muted">
+          Free online calculators — no signup, nothing stored. © {new Date().getFullYear()} ToolHub.
+          <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

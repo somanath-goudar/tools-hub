@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CLUSTERS, toolsInCluster } from '../data/tools';
+---
+
+<BaseLayout
+  title="ToolHub — Free Statistics, Finance, Developer & Writing Calculators"
+  description="A growing hub of free, no-signup calculators and tools: hypothesis tests, finance calculators, developer utilities and writing analyzers. Instant results, nothing stored."
+  path="/"
+>
+  <section class="hero">
+    <h1>Free calculators &amp; tools that actually do the math</h1>
+    <p class="lede">
+      No signup, no limits, nothing stored. Real statistical, financial and text computation —
+      with plain-English results you can copy straight into your work.
+    </p>
+  </section>
+
+  {CLUSTERS.map((c) => (
+    <section class="cluster-block">
+      <h2>{c.emoji} <a href={`/${c.slug}/`}>{c.name}</a></h2>
+      <p class="muted">{c.blurb}</p>
+      <ul class="tool-grid">
+        {toolsInCluster(c.slug).map((t) => (
+          <li><a href={`/${t.cluster}/${t.slug}/`}>{t.h1}</a></li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</BaseLayout>

@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { CLUSTERS, toolsInCluster, getCluster } from '../../data/tools';
+
+export function getStaticPaths() {
+  return CLUSTERS.map((c) => ({ params: { cluster: c.slug } }));
+}
+
+const { cluster } = Astro.params;
+const c = getCluster(cluster!)!;
+const tools = toolsInCluster(cluster!);
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: Astro.site?.toString() },
+      { '@type': 'ListItem', position: 2, name: c.name },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title={`${c.name} Calculators — Free, No Signup | ToolHub`}
+  description={c.blurb}
+  path={`/${c.slug}/`}
+  emoji={c.emoji}
+  jsonLd={jsonLd}
+>
+  <nav class="breadcrumb"><a href="/">Home</a> › <span>{c.name}</span></nav>
+  <h1>{c.emoji} {c.name} Calculators</h1>
+  <p class="lede">{c.blurb}</p>
+
+  <ul class="tool-grid">
+    {tools.map((t) => (
+      <li class="tool-card">
+        <a href={`/${t.cluster}/${t.slug}/`}>
+          <strong>{t.h1}</strong>
+          <span class="muted">{t.metaDescription}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>
