@@ -5,6 +5,7 @@ import LoanCalculator from '../../components/LoanCalculator.astro';
 import TextAnalyzer from '../../components/TextAnalyzer.astro';
 import RegexTester from '../../components/RegexTester.astro';
 import SavingsCalculator from '../../components/SavingsCalculator.astro';
+import JsonFormatter from '../../components/JsonFormatter.astro';
 import { TOOLS, getTool, getCluster } from '../../data/tools';
 
 export function getStaticPaths() {
@@ -71,6 +72,8 @@ const jsonLd = [
     <RegexTester tool={tool} />
   ) : tool.widget.kind === 'savings' ? (
     <SavingsCalculator tool={tool} />
+  ) : tool.widget.kind === 'json' ? (
+    <JsonFormatter tool={tool} />
   ) : (
     <Calculator tool={tool} />
   )}

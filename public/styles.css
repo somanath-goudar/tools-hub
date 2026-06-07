@@ -114,7 +114,10 @@ h2 { font-size: 1.4rem; margin: 1.6em 0 0.5em; }
 .g-name { color: var(--muted); font-size: .78rem; }
 .g-none { color: var(--no-fg); }
 .rx-output-head { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 6px; font-weight: 600; font-size: .9rem; }
-.rx-output { white-space: pre-wrap; word-break: break-word; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0; }
+.rx-output { white-space: pre-wrap; word-break: break-word; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0; max-height: 420px; overflow: auto; }
+.json-opts { grid-template-columns: 1fr; }
+@media (min-width: 560px){ .json-opts { grid-template-columns: repeat(3, auto); align-items: center; } }
+.json-select { margin-left: 6px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; font-size: .85rem; }
 
 /* result */
 .calc-error { margin-top: 14px; padding: 12px 14px; background: var(--no-bg); color: var(--no-fg); border-radius: 8px; }

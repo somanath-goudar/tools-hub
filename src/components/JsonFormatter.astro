@@ -1,0 +1,130 @@
+---
+import type { ToolPage, JsonWidget } from '../data/tools';
+export interface Props { tool: ToolPage }
+const { tool } = Astro.props;
+const w = tool.widget as JsonWidget; // this component only renders json tools
+
+const apiBase = import.meta.env.PUBLIC_API_BASE ?? '';
+const endpoint = `${apiBase}/api/${tool.api.group}`;
+
+const cfg = {
+  endpoint,
+  test: tool.api.test,
+  mode: w.mode,
+  sample: w.sample,
+};
+---
+
+<section class="calc" aria-label="JSON formatter">
+  <label class="calc-label" for="json-input">JSON (or a Python dict / list literal)</label>
+  <textarea id="json-input" class="calc-input rx-text" rows="9" spellcheck="false">{w.sample}</textarea>
+
+  <fieldset class="rx-flags json-opts">
+    <legend>Options</legend>
+    <label class="rx-flag">Indent
+      <select id="json-indent" class="json-select">
+        <option value="2" selected>2 spaces</option>
+        <option value="4">4 spaces</option>
+        <option value="tab">Tab</option>
+      </select>
+    </label>
+    <label class="rx-flag"><input type="checkbox" id="json-sort" /> Sort keys (A→Z)</label>
+    <label class="rx-flag"><input type="checkbox" id="json-minify" checked={w.mode === 'minify'} /> Minify (one line)</label>
+  </fieldset>
+
+  <div class="calc-actions">
+    <button type="button" id="btn-clear" class="btn btn-ghost">Clear</button>
+    <button type="button" id="btn-calc" class="btn btn-primary">{w.mode === 'minify' ? 'Minify JSON' : 'Format JSON'}</button>
+  </div>
+
+  <div id="calc-error" class="calc-error" hidden></div>
+  <div id="calc-result" class="calc-result" hidden></div>
+</section>
+
+<script define:vars={{ cfg }}>
+  const input = document.getElementById('json-input');
+  const resultEl = document.getElementById('calc-result');
+  const errorEl = document.getElementById('calc-error');
+  const $ = (id) => document.getElementById(id);
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    resultEl.hidden = true;
+  }
+
+  function showResult(d) {
+    errorEl.hidden = true;
+    if (!d.valid) {
+      resultEl.innerHTML = `
+        <h2 class="result-head">${esc(d.title)} <span class="badge badge-no">Invalid</span></h2>
+        <p class="result-verdict">${esc(d.verdict)}</p>`;
+      resultEl.hidden = false;
+      resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    const rows = (d.rows || [])
+      .map((r) => `<tr><th scope="row">${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`)
+      .join('');
+    resultEl.innerHTML = `
+      <h2 class="result-head">${esc(d.title)} <span class="badge badge-yes">Valid</span></h2>
+      <p class="result-verdict">${esc(d.verdict)}</p>
+      <div class="rx-output-head"><span>Output</span><button type="button" class="btn btn-ghost btn-copy">Copy</button></div>
+      <pre class="rx-output">${esc(d.result)}</pre>
+      <table class="result-table"><tbody>${rows}</tbody></table>`;
+    resultEl.hidden = false;
+    const btn = resultEl.querySelector('.btn-copy');
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(d.result);
+      btn.textContent = 'Copied!';
+      setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function run() {
+    const text = input.value;
+    if (!text.trim()) return showError('Paste some JSON to format.');
+    const indentSel = $('json-indent').value;
+    const body = {
+      test: cfg.test,
+      text,
+      indent: indentSel === 'tab' ? 'tab' : Number(indentSel),
+      sort: $('json-sort').checked,
+      minify: $('json-minify').checked,
+    };
+    const btn = $('btn-calc');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Working…';
+    try {
+      const res = await fetch(cfg.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const d = await res.json();
+      if (!res.ok && !d.valid && !d.error) throw new Error(`Server error (${res.status})`);
+      if (d.error) throw new Error(d.error);
+      showResult(d);
+    } catch (e) {
+      showError(e.message || 'Something went wrong.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  }
+
+  // ── wire up ──
+  $('btn-calc').addEventListener('click', run);
+  $('btn-clear').addEventListener('click', () => {
+    input.value = '';
+    resultEl.hidden = true;
+    errorEl.hidden = true;
+  });
+  run(); // show a formatted example on load
+</script>

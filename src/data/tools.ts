@@ -61,12 +61,19 @@ export type SavingsWidget = {
   };
 };
 
+export type JsonWidget = {
+  kind: 'json';
+  mode: 'pretty' | 'minify';
+  sample: string;
+};
+
 export type Widget =
   | NumericGroupsWidget
   | LoanWidget
   | TextWidget
   | RegexWidget
-  | SavingsWidget;
+  | SavingsWidget
+  | JsonWidget;
 
 export type ToolPage = {
   cluster: string; // cluster slug
@@ -1450,6 +1457,186 @@ export const TOOLS: ToolPage[] = [
       },
     ],
     related: ['python-regex-tester', 'regex-capture-groups', 'regex-findall'],
+  },
+
+  // ── Developer · JSON tools (shared json widget + stdlib json/ast endpoint, group "jsonfmt") ──
+  {
+    cluster: 'developer',
+    slug: 'json-formatter',
+    primaryKeyword: 'json formatter',
+    title: 'JSON Formatter — Free Online JSON Formatter & Validator',
+    h1: 'JSON Formatter',
+    metaDescription:
+      'Free online JSON formatter and validator. Paste JSON to pretty-print it with your chosen indent, sort keys, validate with exact error location, or minify. Also converts Python dicts.',
+    intro:
+      'Format and validate JSON instantly. Paste your JSON to pretty-print it with 2-space, 4-space or tab indentation, optionally sort keys alphabetically, and validate it with the exact error line and column if something is wrong. It even accepts Python dict and list literals and converts them to valid JSON.',
+    api: { group: 'jsonfmt', test: 'format' },
+    widget: {
+      kind: 'json',
+      mode: 'pretty',
+      sample: '{"name":"Ada","langs":["Python","JS"],"active":true,"meta":{"age":36,"city":"London"}}',
+    },
+    explainerHtml: `
+      <h2>Formatting and validating JSON</h2>
+      <p>A <strong>JSON formatter</strong> takes compact or messy JSON and re-indents it into a clean, readable structure — and in doing so tells you whether it’s valid. This tool runs Python’s own <code>json</code> parser on the server, so validation is exact: if the JSON is malformed you get the precise <strong>line and column</strong> of the problem, the same message you’d see in your code.</p>
+      <p>Useful options:</p>
+      <ul>
+        <li><strong>Indent</strong> — choose 2 spaces, 4 spaces or tabs to match your project’s style.</li>
+        <li><strong>Sort keys</strong> — order object keys alphabetically, which makes diffs and comparisons far easier.</li>
+        <li><strong>Minify</strong> — collapse to a single line with no whitespace for the smallest payload.</li>
+      </ul>
+      <p>A Python bonus: paste a <strong>Python dict or list literal</strong> — with single quotes, <code>True</code>/<code>False</code>/<code>None</code> — and the tool will parse it and emit valid JSON (<code>true</code>/<code>false</code>/<code>null</code>). Your data is parsed in memory and nothing is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How do I know if my JSON is valid?',
+        a: 'Paste it and format. If it is valid you get the formatted output and a green “Valid” badge; if not, you get the exact error message with the line and column where parsing failed.',
+      },
+      {
+        q: 'Can this convert a Python dictionary to JSON?',
+        a: 'Yes. If the input is not valid JSON, the tool tries to read it as a Python literal (single quotes, True/False/None) and converts it to proper JSON with true/false/null.',
+      },
+      {
+        q: 'What is the difference between formatting and minifying?',
+        a: 'Formatting (pretty-printing) adds indentation and line breaks for readability. Minifying removes all unnecessary whitespace to produce the smallest possible single-line JSON, useful for transmission.',
+      },
+      {
+        q: 'Is my JSON stored?',
+        a: 'No. It is parsed and formatted in memory and the result returned. Nothing is saved.',
+      },
+    ],
+    related: ['json-validator', 'json-beautifier', 'json-minifier'],
+  },
+  {
+    cluster: 'developer',
+    slug: 'json-validator',
+    primaryKeyword: 'json validator',
+    title: 'JSON Validator — Check JSON Syntax with Error Location',
+    h1: 'JSON Validator',
+    metaDescription:
+      'Free online JSON validator. Paste JSON to check whether it is valid and get the exact line and column of any syntax error, powered by Python’s json parser. Nothing stored.',
+    intro:
+      'Validate your JSON and pinpoint any error. Paste JSON to instantly check whether it is syntactically valid — and if not, get the exact line and column and a clear message describing what went wrong, using Python’s strict json parser.',
+    api: { group: 'jsonfmt', test: 'format' },
+    widget: {
+      kind: 'json',
+      mode: 'pretty',
+      sample: '{\n  "id": 42,\n  "tags": ["a", "b",],\n  "ok": true\n}',
+    },
+    explainerHtml: `
+      <h2>Validating JSON the strict way</h2>
+      <p>A <strong>JSON validator</strong> checks that your text follows the JSON specification exactly. JSON is stricter than many people expect, and the most common mistakes are easy to miss by eye:</p>
+      <ul>
+        <li><strong>Trailing commas</strong> — <code>[1, 2,]</code> or <code>{"a": 1,}</code> are invalid in JSON (the sample above has one).</li>
+        <li><strong>Single quotes</strong> — strings and keys must use double quotes.</li>
+        <li><strong>Unquoted keys</strong> — every object key must be a quoted string.</li>
+        <li><strong>Python/JS values</strong> — <code>True</code>, <code>None</code>, <code>NaN</code>, <code>undefined</code> are not valid JSON (use <code>true</code>, <code>null</code>).</li>
+      </ul>
+      <p>This validator uses Python’s <code>json</code> module, which reports the precise <strong>line and column</strong> of the first error — so instead of a vague “invalid JSON”, you know exactly where to look. When the input is valid, it also pretty-prints it for you. Nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'Why is my JSON invalid?',
+        a: 'The most common causes are trailing commas, single quotes instead of double quotes, unquoted keys, or using Python/JavaScript values like True, None or undefined. The validator shows the exact line and column of the first error.',
+      },
+      {
+        q: 'Are trailing commas allowed in JSON?',
+        a: 'No. Unlike JavaScript, JSON does not permit a trailing comma after the last element of an array or object. Remove it to make the JSON valid.',
+      },
+      {
+        q: 'Does the validator show where the error is?',
+        a: 'Yes. It reports the line and column of the first syntax error along with a description, using Python’s json parser, so you can jump straight to the problem.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Validation runs in memory and nothing you paste is saved.',
+      },
+    ],
+    related: ['json-formatter', 'json-beautifier', 'json-minifier'],
+  },
+  {
+    cluster: 'developer',
+    slug: 'json-beautifier',
+    primaryKeyword: 'json beautifier',
+    title: 'JSON Beautifier — Pretty-Print JSON Online, Free',
+    h1: 'JSON Beautifier',
+    metaDescription:
+      'Free JSON beautifier. Paste minified or messy JSON to pretty-print it with clean indentation and optional sorted keys. Validates as it formats. Nothing stored.',
+    intro:
+      'Beautify minified or messy JSON into clean, readable, indented form. Paste your JSON, choose your indentation and whether to sort keys, and get nicely formatted output you can copy — with validation built in so you know it’s correct.',
+    api: { group: 'jsonfmt', test: 'format' },
+    widget: {
+      kind: 'json',
+      mode: 'pretty',
+      sample: '{"order":{"id":1001,"items":[{"sku":"A1","qty":2},{"sku":"B7","qty":1}],"paid":true}}',
+    },
+    explainerHtml: `
+      <h2>Why beautify JSON?</h2>
+      <p>Minified JSON — all on one line with no spaces — is efficient for machines but painful for humans. A <strong>JSON beautifier</strong> expands it into an indented, hierarchical layout where the structure is obvious at a glance, which makes debugging API responses, config files and logs dramatically easier.</p>
+      <p>This beautifier lets you pick <strong>2 spaces, 4 spaces or tabs</strong> to match your editor, and optionally <strong>sort object keys alphabetically</strong> so the same data always formats identically — handy when comparing two responses in a diff. Because it parses with Python’s <code>json</code> module, beautifying also validates: if the input isn’t valid JSON, you’ll get the exact location of the error instead of garbled output.</p>
+      <p>Paste, beautify, and copy the clean result. It even accepts Python dict literals and turns them into proper JSON. Nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What does beautifying JSON do?',
+        a: 'It re-formats JSON with indentation and line breaks so the structure is easy to read, the opposite of minifying. The data itself is unchanged — only the whitespace and layout.',
+      },
+      {
+        q: 'Can I choose the indentation?',
+        a: 'Yes. You can pretty-print with 2 spaces, 4 spaces or tabs, and optionally sort the keys alphabetically for consistent, diff-friendly output.',
+      },
+      {
+        q: 'Does beautifying also validate the JSON?',
+        a: 'Yes. The input must be parsed before it can be re-formatted, so invalid JSON is caught and reported with the exact line and column of the error.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Everything runs in memory and nothing you paste is saved.',
+      },
+    ],
+    related: ['json-formatter', 'json-validator', 'json-minifier'],
+  },
+  {
+    cluster: 'developer',
+    slug: 'json-minifier',
+    primaryKeyword: 'json minifier',
+    title: 'JSON Minifier — Minify & Compress JSON Online, Free',
+    h1: 'JSON Minifier',
+    metaDescription:
+      'Free JSON minifier. Paste JSON to strip all whitespace and compress it to a single line, reducing payload size. Validates as it minifies and shows the size saved. Nothing stored.',
+    intro:
+      'Minify your JSON to the smallest possible size. Paste formatted JSON to strip out all whitespace and line breaks, producing a compact single-line string ideal for transmission, storage or embedding — with validation built in and the output size shown.',
+    api: { group: 'jsonfmt', test: 'format' },
+    widget: {
+      kind: 'json',
+      mode: 'minify',
+      sample: '{\n  "name": "Ada",\n  "langs": ["Python", "JS"],\n  "active": true,\n  "meta": {\n    "age": 36\n  }\n}',
+    },
+    explainerHtml: `
+      <h2>Minifying JSON to shrink payloads</h2>
+      <p>A <strong>JSON minifier</strong> removes every unnecessary character — spaces, tabs and newlines between tokens — to produce the most compact valid JSON possible. The data is identical; it just takes fewer bytes, which means faster network transfers and smaller storage, especially across many API calls.</p>
+      <p>Minification is the counterpart to beautifying: you beautify while developing and debugging, then minify for production payloads, embedding JSON in a URL or a data attribute, or storing it compactly. This tool shows the resulting <strong>character count</strong> so you can see exactly how much smaller the output is.</p>
+      <p>As with the formatter, minifying first <strong>parses and validates</strong> your JSON using Python’s <code>json</code> module, so you can’t accidentally produce broken output — invalid input is flagged with the exact error location. Paste, minify, and copy. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What does minifying JSON do?',
+        a: 'It removes all whitespace between tokens, collapsing the JSON to a single compact line. The data is unchanged but the byte size is smaller, which speeds up transfer and reduces storage.',
+      },
+      {
+        q: 'Does minifying change my data?',
+        a: 'No. Only whitespace and formatting are removed. Keys, values, order and structure stay exactly the same — it is purely a size optimisation.',
+      },
+      {
+        q: 'Is minified JSON still valid?',
+        a: 'Yes. The minifier parses and validates your JSON first, so the compact output is guaranteed to be valid JSON (assuming the input was, or could be read as a Python literal).',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Minification runs in memory and nothing you paste is saved.',
+      },
+    ],
+    related: ['json-formatter', 'json-validator', 'json-beautifier'],
   },
 ];
 
