@@ -215,16 +215,55 @@ def _effect_eta(e):
     return "small" if e < 0.06 else "medium" if e < 0.14 else "large"
 
 
+def confint(groups):
+    x = np.array(groups[0], float)
+    n = len(x)
+    mean = x.mean()
+    sd = x.std(ddof=1)
+    sem = sd / np.sqrt(n)
+    df = n - 1
+
+    rows = [
+        ["Count (n)", n],
+        ["Mean", _fmt(mean, 4)],
+        ["Sample standard deviation (s)", _fmt(sd, 4)],
+        ["Standard error of mean (SEM)", _fmt(sem, 4)],
+        ["Degrees of freedom (df)", df],
+    ]
+    moe95 = t95 = ci95 = None
+    for level in (90, 95, 99):
+        alpha = 1 - level / 100
+        tcrit = float(stats.t.ppf(1 - alpha / 2, df))
+        moe = tcrit * sem
+        lo, hi = mean - moe, mean + moe
+        rows.append([f"{level}% confidence interval", f"[{lo:.4g}, {hi:.4g}]"])
+        if level == 95:
+            moe95, t95, ci95 = moe, tcrit, (lo, hi)
+    rows.append(["Margin of error (95%)", _fmt(moe95, 4)])
+    rows.append(["t critical (95%)", _fmt(t95, 4)])
+
+    return {
+        "title": "Confidence interval (t-based)",
+        "verdict": (
+            f"We are 95% confident the true population mean lies between "
+            f"{ci95[0]:.4g} and {ci95[1]:.4g} (sample mean {mean:.4g} ± {moe95:.4g}). "
+            f"Based on n = {n}, using the t-distribution with {df} degrees of freedom."
+        ),
+        "rows": rows,
+    }
+
+
 TESTS = {
     "ttest_ind": ttest_ind,
     "ttest_paired": ttest_paired,
     "anova": anova,
     "mannwhitney": mannwhitney,
     "describe": describe,
+    "confint": confint,
 }
 
 # Tests that operate on a single data set rather than two-or-more groups.
-SINGLE_GROUP = {"describe"}
+SINGLE_GROUP = {"describe", "confint"}
 
 
 def compute(payload):

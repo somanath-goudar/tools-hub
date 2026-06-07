@@ -517,6 +517,188 @@ export const TOOLS: ToolPage[] = [
     related: ['standard-deviation-calculator', 'mean-median-mode-calculator', 'variance-calculator'],
   },
 
+  // ── Statistics · Confidence intervals (single-data-set numeric-groups widget + scipy `confint`) ──
+  {
+    cluster: 'statistics',
+    slug: 'confidence-interval-calculator',
+    primaryKeyword: 'confidence interval calculator',
+    title: 'Confidence Interval Calculator — 90%, 95% & 99%, Free',
+    h1: 'Confidence Interval Calculator',
+    metaDescription:
+      'Free confidence interval calculator. Paste your data to get the 90%, 95% and 99% confidence intervals for the mean, with margin of error, standard error and the t critical value.',
+    intro:
+      'Calculate the confidence interval for the mean of your data. Paste your sample and get the 90%, 95% and 99% confidence intervals at once — along with the mean, standard error, margin of error and the t critical value — computed with the Student’s t-distribution so the result is accurate for small samples.',
+    api: { group: 'stats', test: 'confint' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your sample',
+      sample: [[12, 15, 14, 10, 13, 16, 11, 14, 12, 15]],
+    },
+    explainerHtml: `
+      <h2>What a confidence interval tells you</h2>
+      <p>A <strong>confidence interval</strong> is a range, calculated from your sample, that is likely to contain the true population mean. A 95% confidence interval means that if you repeated the sampling many times, about 95% of the intervals you’d build would capture the real mean. It expresses the <em>uncertainty</em> in your estimate — a narrow interval means a precise estimate, a wide one means more uncertainty.</p>
+      <p>The interval is <code>x̄ ± t* × (s / √n)</code>, where <em>x̄</em> is the sample mean, <em>s</em> the sample standard deviation, <em>n</em> the sample size, and <em>t*</em> the critical value from the <strong>t-distribution</strong> for your confidence level and degrees of freedom (n − 1). Using the t-distribution (rather than the normal z) makes the interval correct even for small samples — that’s why this calculator uses it throughout.</p>
+      <p>This tool reports the <strong>90%, 95% and 99%</strong> intervals together so you can see the trade-off: higher confidence gives a wider interval. It also shows the margin of error and t critical value behind the 95% interval. Your data is computed in memory and nothing is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What does a 95% confidence interval mean?',
+        a: 'It means that if you repeated your sampling many times and built an interval each time, about 95% of those intervals would contain the true population mean. It is a statement about the method’s long-run reliability, not a 95% probability for one specific interval.',
+      },
+      {
+        q: 'Why use the t-distribution instead of the normal (z)?',
+        a: 'When the population standard deviation is unknown and estimated from the sample — which is almost always — the t-distribution gives correct, slightly wider intervals, especially for small samples. This calculator uses the t-distribution with n − 1 degrees of freedom.',
+      },
+      {
+        q: 'Why is the 99% interval wider than the 95%?',
+        a: 'Higher confidence requires capturing the mean more often, so the interval must be wider. There is a direct trade-off between confidence level and precision.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Calculations run in memory and the result is returned; nothing you enter is saved.',
+      },
+    ],
+    related: ['mean-confidence-interval-calculator', 'standard-error-calculator', 'margin-of-error-calculator'],
+  },
+  {
+    cluster: 'statistics',
+    slug: 'mean-confidence-interval-calculator',
+    primaryKeyword: 'confidence interval for the mean calculator',
+    title: 'Confidence Interval for the Mean Calculator — t-based, Free',
+    h1: 'Confidence Interval for the Mean',
+    metaDescription:
+      'Free calculator for the confidence interval of a mean. Paste your sample to get the t-based 90%, 95% and 99% intervals, margin of error, standard error and degrees of freedom.',
+    intro:
+      'Estimate the confidence interval for a population mean from your sample data. Paste your numbers to get the t-based 90%, 95% and 99% confidence intervals for the mean, along with the sample mean, standard error, margin of error and degrees of freedom.',
+    api: { group: 'stats', test: 'confint' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your sample',
+      sample: [[5.1, 4.9, 5.3, 5.0, 4.8, 5.2, 5.0, 4.7, 5.4, 5.1, 4.9, 5.2]],
+    },
+    explainerHtml: `
+      <h2>Estimating a population mean</h2>
+      <p>When you measure a <strong>sample</strong>, the sample mean is your best single guess for the whole population’s mean — but it’s rarely exactly right. A <strong>confidence interval for the mean</strong> turns that single guess into an honest range that accounts for sampling variability.</p>
+      <p>The width of the interval depends on three things: how much your data <strong>varies</strong> (larger standard deviation → wider interval), how <strong>big</strong> your sample is (more data → narrower interval, because the standard error shrinks with √n), and your chosen <strong>confidence level</strong>. The formula is <code>x̄ ± t* · s/√n</code>, evaluated with the t-distribution and n − 1 degrees of freedom.</p>
+      <p>This calculator gives the 90%, 95% and 99% intervals from a single paste, so you can report whichever your field expects (95% is the most common). It’s the right tool whenever you have raw sample data and want to state how precisely you’ve pinned down the mean. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How do I calculate a confidence interval for the mean?',
+        a: 'Take the sample mean and add/subtract the margin of error, which is the t critical value times the standard error (s/√n). This tool does it automatically and reports the 90%, 95% and 99% intervals.',
+      },
+      {
+        q: 'What sample size do I need?',
+        a: 'There is no fixed minimum, but larger samples give narrower, more precise intervals because the standard error decreases with the square root of n. The t-distribution keeps small-sample intervals valid.',
+      },
+      {
+        q: 'What is the difference between this and a confidence interval for a proportion?',
+        a: 'This interval is for a mean of continuous measurements. A proportion (percentage) uses a different formula based on p and n. This tool handles the mean of numeric data.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Everything is computed in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['confidence-interval-calculator', 'standard-error-calculator', 'margin-of-error-calculator'],
+  },
+  {
+    cluster: 'statistics',
+    slug: 'standard-error-calculator',
+    primaryKeyword: 'standard error calculator',
+    title: 'Standard Error Calculator — Standard Error of the Mean (SEM)',
+    h1: 'Standard Error Calculator',
+    metaDescription:
+      'Free standard error calculator. Paste your data to get the standard error of the mean (SEM), along with the mean, standard deviation, sample size and confidence intervals.',
+    intro:
+      'Calculate the standard error of the mean (SEM) for your data. Paste your sample to get the SEM, the sample mean and standard deviation, the sample size, and the resulting confidence intervals — everything you need to report how precisely your sample estimates the population mean.',
+    api: { group: 'stats', test: 'confint' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your sample',
+      sample: [[98, 102, 95, 110, 100, 97, 105, 99, 101, 96]],
+    },
+    explainerHtml: `
+      <h2>Standard error vs standard deviation</h2>
+      <p>The <strong>standard error of the mean (SEM)</strong> measures how precisely your sample mean estimates the true population mean. It is easy to confuse with the standard deviation, but they answer different questions:</p>
+      <ul>
+        <li><strong>Standard deviation (s)</strong> describes the spread of the individual data points.</li>
+        <li><strong>Standard error (SEM)</strong> describes the spread of the <em>sample mean</em> — how much it would jump around if you took many samples.</li>
+      </ul>
+      <p>The formula is <code>SEM = s / √n</code>. Crucially, the standard error <strong>shrinks as your sample grows</strong>: quadruple the sample size and you halve the standard error. That’s why bigger studies produce more precise estimates and narrower confidence intervals. The SEM is the building block of the confidence interval — multiply it by the t critical value to get the margin of error.</p>
+      <p>This calculator reports the SEM alongside the mean, standard deviation, sample size and the confidence intervals it produces. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What is the standard error of the mean?',
+        a: 'The standard error of the mean (SEM) is the standard deviation divided by the square root of the sample size (s/√n). It estimates how much the sample mean would vary from sample to sample.',
+      },
+      {
+        q: 'What is the difference between standard error and standard deviation?',
+        a: 'Standard deviation measures the spread of individual data points; standard error measures the precision of the sample mean. SEM is always smaller than s and decreases as the sample size grows.',
+      },
+      {
+        q: 'How does sample size affect the standard error?',
+        a: 'The standard error is inversely proportional to the square root of the sample size. Increasing n by a factor of four halves the standard error, giving a more precise estimate of the mean.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Calculations run in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['confidence-interval-calculator', 'mean-confidence-interval-calculator', 'margin-of-error-calculator'],
+  },
+  {
+    cluster: 'statistics',
+    slug: 'margin-of-error-calculator',
+    primaryKeyword: 'margin of error calculator',
+    title: 'Margin of Error Calculator — for a Sample Mean, Free',
+    h1: 'Margin of Error Calculator',
+    metaDescription:
+      'Free margin of error calculator for a sample mean. Paste your data to get the 95% margin of error (and 90%/99%), based on the t critical value and the standard error.',
+    intro:
+      'Calculate the margin of error for a sample mean from your data. Paste your numbers to get the margin of error at the 95% confidence level (plus 90% and 99% via the confidence intervals), along with the t critical value, standard error and the resulting interval.',
+    api: { group: 'stats', test: 'confint' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your sample',
+      sample: [[72, 68, 75, 70, 71, 69, 73, 74, 70, 72, 68, 71]],
+    },
+    explainerHtml: `
+      <h2>What the margin of error means</h2>
+      <p>The <strong>margin of error</strong> is the “plus or minus” you see attached to an estimate — it’s half the width of a confidence interval. For a sample mean it is <code>t* × (s / √n)</code>: the t critical value for your confidence level multiplied by the standard error. Report your result as <em>mean ± margin of error</em>.</p>
+      <p>Two things shrink the margin of error and so tighten your estimate: a <strong>larger sample</strong> (the √n in the denominator) and <strong>lower variability</strong> in the data. Raising the confidence level (say from 95% to 99%) <em>increases</em> the margin of error, because you’re demanding a range that’s right more often.</p>
+      <p>Note this calculator computes the margin of error for the <strong>mean of numeric data</strong>. The margin of error quoted for opinion polls is a related but different formula based on a proportion and sample size. Here, paste your measurements and get the margin of error and the full interval. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How is the margin of error calculated?',
+        a: 'For a sample mean, the margin of error is the t critical value times the standard error (t* · s/√n). It equals half the width of the confidence interval, so the interval is mean ± margin of error.',
+      },
+      {
+        q: 'How can I reduce the margin of error?',
+        a: 'Increase your sample size (the most reliable way, since error falls with √n), reduce variability in your measurements, or accept a lower confidence level. Larger samples give a smaller margin of error.',
+      },
+      {
+        q: 'Is this the same as the polling margin of error?',
+        a: 'Not exactly. This computes the margin of error for the mean of numeric data. Opinion polls report the margin of error for a proportion, which uses a different formula based on the percentage and sample size.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Everything is computed in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['confidence-interval-calculator', 'mean-confidence-interval-calculator', 'standard-error-calculator'],
+  },
+
   // ── Finance · Loan amortization (one shared loan widget + pure-Python endpoint) ──
   {
     cluster: 'finance',
