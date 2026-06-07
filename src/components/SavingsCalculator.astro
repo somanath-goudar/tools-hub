@@ -18,19 +18,19 @@ const cfg = {
   <div class="loan-fields">
     <label class="field">
       <span>Initial deposit ($)</span>
-      <input type="number" id="f-principal" min="0" step="100" value={w.defaults.principal} />
+      <input type="number" inputmode="decimal" id="f-principal" min="0" step="100" value={w.defaults.principal} />
     </label>
     <label class="field field-highlight">
       <span>Regular contribution ($)</span>
-      <input type="number" id="f-contribution" min="0" step="50" value={w.defaults.contribution} />
+      <input type="number" inputmode="decimal" id="f-contribution" min="0" step="50" value={w.defaults.contribution} />
     </label>
     <label class="field">
       <span>Annual interest rate (%)</span>
-      <input type="number" id="f-rate" min="0" step="0.01" value={w.defaults.rate} />
+      <input type="number" inputmode="decimal" id="f-rate" min="0" step="0.01" value={w.defaults.rate} />
     </label>
     <label class="field">
       <span>Years</span>
-      <input type="number" id="f-years" min="1" step="1" value={w.defaults.years} />
+      <input type="number" inputmode="numeric" id="f-years" min="1" step="1" value={w.defaults.years} />
     </label>
     <fieldset class="field field-freq">
       <span>Contribution & compounding</span>
@@ -46,8 +46,8 @@ const cfg = {
     <button type="button" id="btn-calc" class="btn btn-primary">Calculate</button>
   </div>
 
-  <div id="calc-error" class="calc-error" hidden></div>
-  <div id="calc-result" class="calc-result" hidden></div>
+  <div id="calc-error" class="calc-error" role="alert" hidden></div>
+  <div id="calc-result" class="calc-result" aria-live="polite" hidden></div>
 </section>
 
 <script define:vars={{ cfg }}>
@@ -93,13 +93,13 @@ const cfg = {
     const step = years <= 7 ? 1 : years <= 15 ? 3 : 5;
     for (let yr = 0; yr <= years; yr += step) {
       const i = points.findIndex((p) => p.year >= yr);
-      if (i >= 0) ticks.push(`<text x="${x(i).toFixed(1)}" y="${H - 6}" font-size="10" fill="#5b6472" text-anchor="middle">${yr}y</text>`);
+      if (i >= 0) ticks.push(`<text x="${x(i).toFixed(1)}" y="${H - 6}" font-size="10" fill="#888888" text-anchor="middle">${yr}y</text>`);
     }
     return `<svg viewBox="0 0 ${W} ${H}" class="loan-chart" role="img" aria-label="Savings balance over time">
-      <path d="${area}" fill="rgba(47,91,234,.10)" stroke="none"/>
-      <path d="${line('balance')}" fill="none" stroke="#2f5bea" stroke-width="2"/>
-      <path d="${line('contributions')}" fill="none" stroke="#16794a" stroke-width="1.5" stroke-dasharray="4 3"/>
-      <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#e6e9ef"/>
+      <path d="${area}" fill="rgba(23,23,23,.06)" stroke="none"/>
+      <path d="${line('balance')}" fill="none" stroke="#171717" stroke-width="2"/>
+      <path d="${line('contributions')}" fill="none" stroke="#29bc9b" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#ebebeb"/>
       ${ticks.join('')}
     </svg>
     <div class="chart-legend"><span class="k k-bal">Balance</span><span class="k k-contrib">Total contributed</span></div>`;
@@ -149,7 +149,7 @@ const cfg = {
       </details>`;
     resultEl.hidden = false;
     resultEl.querySelector('.btn-csv')?.addEventListener('click', downloadCsv);
-    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    resultEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
   }
 
   async function calculate() {

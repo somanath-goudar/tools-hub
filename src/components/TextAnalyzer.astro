@@ -22,7 +22,7 @@ const cfg = {
 <section class="calc" aria-label="Readability analyzer">
   <label class="calc-label" for="text-input">Your text</label>
   <textarea id="text-input" class="calc-input text-input" rows="9" placeholder={w.placeholder}></textarea>
-  <div class="text-meta"><span id="live-count">0 words</span></div>
+  <div class="text-meta"><span id="live-count" aria-live="polite">0 words</span></div>
 
   <div class="calc-actions">
     <button type="button" id="btn-sample" class="btn btn-ghost">Try sample text</button>
@@ -30,8 +30,8 @@ const cfg = {
     <button type="button" id="btn-calc" class="btn btn-primary">{action}</button>
   </div>
 
-  <div id="calc-error" class="calc-error" hidden></div>
-  <div id="calc-result" class="calc-result" hidden></div>
+  <div id="calc-error" class="calc-error" role="alert" hidden></div>
+  <div id="calc-result" class="calc-result" aria-live="polite" hidden></div>
 </section>
 
 <script define:vars={{ cfg }}>
@@ -98,7 +98,7 @@ const cfg = {
       <table class="result-table"><tbody>${rows}</tbody></table>
     `;
     resultEl.hidden = false;
-    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    resultEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
   }
 
   async function analyze() {

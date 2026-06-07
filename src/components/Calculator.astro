@@ -33,8 +33,8 @@ const cfg = {
     <button type="button" id="btn-calc" class="btn btn-primary">Calculate</button>
   </div>
 
-  <div id="calc-error" class="calc-error" hidden></div>
-  <div id="calc-result" class="calc-result" hidden></div>
+  <div id="calc-error" class="calc-error" role="alert" hidden></div>
+  <div id="calc-result" class="calc-result" aria-live="polite" hidden></div>
 </section>
 
 <script define:vars={{ cfg }}>
@@ -46,14 +46,17 @@ const cfg = {
     const wrap = document.createElement('div');
     wrap.className = 'calc-group';
     const label = document.createElement('label');
+    const fieldId = `calc-field-${index}`;
+    label.htmlFor = fieldId;
     // Single-data-set tools (e.g. descriptive stats) use just the label, no index.
     label.textContent = cfg.groupsDefault === 1 && cfg.groupsFixed
       ? cfg.groupLabel
       : `${cfg.groupLabel} ${index + 1}`;
     const ta = document.createElement('textarea');
+    ta.id = fieldId;
     ta.className = 'calc-input';
     ta.rows = 4;
-    ta.placeholder = 'Paste numbers — comma, space or newline separated';
+    ta.placeholder = 'e.g. 23, 41, 18, 36…';
     ta.value = value;
     wrap.append(label, ta);
     return wrap;
@@ -110,7 +113,7 @@ const cfg = {
         setTimeout(() => (copyBtn.textContent = 'Copy'), 1500);
       });
     }
-    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    resultEl.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
   }
 
   async function calculate() {
