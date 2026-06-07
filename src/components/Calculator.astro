@@ -1,7 +1,8 @@
 ---
-import type { ToolPage } from '../data/tools';
+import type { ToolPage, NumericGroupsWidget } from '../data/tools';
 export interface Props { tool: ToolPage }
 const { tool } = Astro.props;
+const w = tool.widget as NumericGroupsWidget; // this component only renders numeric-groups tools
 
 // API base: same-origin in prod (/api/<group>). Overridable for local dev via PUBLIC_API_BASE.
 const apiBase = import.meta.env.PUBLIC_API_BASE ?? '';
@@ -10,10 +11,10 @@ const endpoint = `${apiBase}/api/${tool.api.group}`;
 const cfg = {
   endpoint,
   test: tool.api.test,
-  groupsDefault: tool.widget.groupsDefault,
-  groupsFixed: tool.widget.groupsFixed,
-  groupLabel: tool.widget.groupLabel,
-  sample: tool.sample,
+  groupsDefault: w.groupsDefault,
+  groupsFixed: w.groupsFixed,
+  groupLabel: w.groupLabel,
+  sample: w.sample,
 };
 ---
 
@@ -21,9 +22,9 @@ const cfg = {
   <div id="calc-groups" class="calc-groups"></div>
 
   <div class="calc-actions">
-    {!tool.widget.groupsFixed && (
+    {!w.groupsFixed && (
       <>
-        <button type="button" id="btn-add" class="btn btn-ghost">+ Add {tool.widget.groupLabel.toLowerCase()}</button>
+        <button type="button" id="btn-add" class="btn btn-ghost">+ Add {w.groupLabel.toLowerCase()}</button>
         <button type="button" id="btn-remove" class="btn btn-ghost">– Remove</button>
       </>
     )}
