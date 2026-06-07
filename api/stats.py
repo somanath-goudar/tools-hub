@@ -150,6 +150,63 @@ def mannwhitney(groups):
     }
 
 
+def describe(groups):
+    x = np.array(groups[0], float)
+    n = len(x)
+    mean = x.mean()
+    median = np.median(x)
+    total = x.sum()
+
+    vals, counts = np.unique(x, return_counts=True)
+    maxc = int(counts.max())
+    if maxc == 1:
+        mode_str = "no mode (all values unique)"
+    else:
+        modes = vals[counts == maxc]
+        mode_str = ", ".join(f"{m:g}" for m in modes) + f" (×{maxc})"
+
+    sd_s = x.std(ddof=1) if n > 1 else 0.0
+    var_s = x.var(ddof=1) if n > 1 else 0.0
+    sd_p = x.std(ddof=0)
+    var_p = x.var(ddof=0)
+    q1, q3 = np.percentile(x, [25, 75])
+    iqr = q3 - q1
+    rng = x.max() - x.min()
+    sem = sd_s / np.sqrt(n) if n > 0 else 0.0
+    cv = (sd_s / mean * 100) if mean else 0.0
+    skew = stats.skew(x)
+    kurt = stats.kurtosis(x)  # Fisher (excess) kurtosis
+
+    return {
+        "title": "Descriptive statistics",
+        "verdict": (
+            f"n = {n}: mean = {mean:.4g}, median = {median:.4g}, "
+            f"sample SD = {sd_s:.4g}, range = {rng:.4g}."
+        ),
+        "rows": [
+            ["Count (n)", n],
+            ["Sum", _fmt(total, 4)],
+            ["Mean (average)", _fmt(mean, 4)],
+            ["Median", _fmt(median, 4)],
+            ["Mode", mode_str],
+            ["Minimum", _fmt(x.min(), 4)],
+            ["Maximum", _fmt(x.max(), 4)],
+            ["Range", _fmt(rng, 4)],
+            ["Sample standard deviation (s)", _fmt(sd_s, 4)],
+            ["Population standard deviation (σ)", _fmt(sd_p, 4)],
+            ["Sample variance (s²)", _fmt(var_s, 4)],
+            ["Population variance (σ²)", _fmt(var_p, 4)],
+            ["1st quartile (Q1, 25%)", _fmt(q1, 4)],
+            ["3rd quartile (Q3, 75%)", _fmt(q3, 4)],
+            ["Interquartile range (IQR)", _fmt(iqr, 4)],
+            ["Standard error of mean (SEM)", _fmt(sem, 4)],
+            ["Coefficient of variation (CV)", f"{cv:.2f}%"],
+            ["Skewness", _fmt(skew, 4)],
+            ["Kurtosis (excess)", _fmt(kurt, 4)],
+        ],
+    }
+
+
 def _effect_d(d):
     return "small" if d < 0.5 else "medium" if d < 0.8 else "large"
 
@@ -163,7 +220,11 @@ TESTS = {
     "ttest_paired": ttest_paired,
     "anova": anova,
     "mannwhitney": mannwhitney,
+    "describe": describe,
 }
+
+# Tests that operate on a single data set rather than two-or-more groups.
+SINGLE_GROUP = {"describe"}
 
 
 def compute(payload):
@@ -171,10 +232,12 @@ def compute(payload):
     groups = payload.get("groups")
     if test not in TESTS:
         raise ValueError(f"Unknown test: {test}")
-    if not groups or len(groups) < 2:
-        raise ValueError("Need at least two groups of numbers.")
+    if not groups:
+        raise ValueError("Provide your data.")
     if any(len(g) < 2 for g in groups):
-        raise ValueError("Each group needs at least 2 numbers.")
+        raise ValueError("Each data set needs at least 2 numbers.")
+    if test not in SINGLE_GROUP and len(groups) < 2:
+        raise ValueError("Need at least two groups of numbers.")
     return TESTS[test](groups)
 
 

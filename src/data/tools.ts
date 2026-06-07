@@ -295,6 +295,201 @@ export const TOOLS: ToolPage[] = [
     related: ['t-test-calculator', 'paired-t-test-calculator', 'anova-calculator'],
   },
 
+  // ── Statistics · Descriptive stats (single-data-set numeric-groups widget + scipy `describe`) ──
+  {
+    cluster: 'statistics',
+    slug: 'standard-deviation-calculator',
+    primaryKeyword: 'standard deviation calculator',
+    title: 'Standard Deviation Calculator — Sample & Population, with Steps',
+    h1: 'Standard Deviation Calculator',
+    metaDescription:
+      'Free standard deviation calculator. Paste your data to get the sample (s) and population (σ) standard deviation, plus variance, mean, and the full set of descriptive statistics.',
+    intro:
+      'Calculate the standard deviation of your data in one step. Paste a list of numbers and get both the sample standard deviation (s) and the population standard deviation (σ), along with the variance, mean, median and a full descriptive-statistics breakdown — so you can see exactly how spread out your data is.',
+    api: { group: 'stats', test: 'describe' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your data',
+      sample: [[85, 90, 78, 92, 88, 76, 95, 89, 84, 91]],
+    },
+    explainerHtml: `
+      <h2>Sample vs population standard deviation</h2>
+      <p><strong>Standard deviation</strong> measures how spread out a set of numbers is around the mean. A small standard deviation means the values cluster tightly around the average; a large one means they are widely scattered. It is the square root of the variance, which puts it back in the same units as your data.</p>
+      <p>The key choice is <strong>sample</strong> versus <strong>population</strong>:</p>
+      <ul>
+        <li><strong>Sample standard deviation (s)</strong> divides by <em>n − 1</em> (Bessel’s correction). Use it when your data is a <em>sample</em> drawn from a larger group you want to make inferences about — this is the most common case.</li>
+        <li><strong>Population standard deviation (σ)</strong> divides by <em>n</em>. Use it only when your data represents the <em>entire</em> population.</li>
+      </ul>
+      <p>This calculator reports both so you can pick the right one, and it shows the variance, mean, median, range and quartiles alongside. The formula for the sample version is <code>s = √[ Σ(xᵢ − x̄)² / (n − 1) ]</code>. Your numbers are computed in memory and nothing is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'Should I use sample or population standard deviation?',
+        a: 'Use the sample standard deviation (dividing by n − 1) when your data is a sample from a larger population, which is the usual situation. Use the population standard deviation (dividing by n) only when your data covers the entire population.',
+      },
+      {
+        q: 'What is the difference between standard deviation and variance?',
+        a: 'Variance is the average of the squared differences from the mean; standard deviation is its square root. Standard deviation is in the same units as your data, which makes it easier to interpret.',
+      },
+      {
+        q: 'What does a high standard deviation mean?',
+        a: 'A high standard deviation means the values are spread out widely from the mean; a low one means they are clustered close to it. It is a direct measure of variability.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Your numbers are computed in memory and the result is returned. Nothing is saved.',
+      },
+    ],
+    related: ['variance-calculator', 'mean-median-mode-calculator', 'descriptive-statistics-calculator'],
+  },
+  {
+    cluster: 'statistics',
+    slug: 'mean-median-mode-calculator',
+    primaryKeyword: 'mean median mode calculator',
+    title: 'Mean, Median, Mode Calculator — Free, with Range & Steps',
+    h1: 'Mean, Median & Mode Calculator',
+    metaDescription:
+      'Free mean, median and mode calculator. Paste your numbers to get the mean (average), median, mode and range instantly — plus standard deviation and full descriptive statistics.',
+    intro:
+      'Find the mean, median and mode of any data set at once. Paste your numbers to get the mean (average), the median (middle value), the mode (most frequent value) and the range — along with standard deviation, quartiles and a full descriptive-statistics summary.',
+    api: { group: 'stats', test: 'describe' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your data',
+      sample: [[4, 8, 15, 16, 16, 23, 42, 16, 8]],
+    },
+    explainerHtml: `
+      <h2>Mean, median and mode — the three averages</h2>
+      <p>These three “measures of central tendency” each describe the centre of your data in a different way, and which one is most useful depends on your data’s shape.</p>
+      <ul>
+        <li><strong>Mean</strong> — the arithmetic average: add up all the values and divide by how many there are. It uses every value, but is sensitive to outliers.</li>
+        <li><strong>Median</strong> — the middle value when the numbers are sorted (or the average of the two middle values). It is robust to outliers, which is why incomes and house prices are usually reported as medians.</li>
+        <li><strong>Mode</strong> — the value that appears most often. A data set can have one mode, several modes, or none if every value is unique.</li>
+      </ul>
+      <p>When the mean and median are close, your data is roughly symmetric. When the mean is pulled well above or below the median, the data is skewed and the median is often the more honest summary. This calculator reports all three plus the range and full descriptive statistics, so you can compare them at a glance. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What is the difference between mean, median and mode?',
+        a: 'The mean is the arithmetic average, the median is the middle value when the data is sorted, and the mode is the most frequently occurring value. They can differ a lot when the data is skewed or has outliers.',
+      },
+      {
+        q: 'When should I use the median instead of the mean?',
+        a: 'Use the median when your data has outliers or is skewed, because it is not distorted by extreme values. This is why median income and median house price are commonly reported instead of the mean.',
+      },
+      {
+        q: 'Can a data set have more than one mode?',
+        a: 'Yes. A data set can be bimodal or multimodal if several values tie for the highest frequency, and it has no mode if every value occurs exactly once. This calculator lists all modes it finds.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Everything is computed in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['standard-deviation-calculator', 'variance-calculator', 'descriptive-statistics-calculator'],
+  },
+  {
+    cluster: 'statistics',
+    slug: 'variance-calculator',
+    primaryKeyword: 'variance calculator',
+    title: 'Variance Calculator — Sample & Population Variance, Free',
+    h1: 'Variance Calculator',
+    metaDescription:
+      'Free variance calculator. Paste your data to get the sample variance (s²) and population variance (σ²), plus standard deviation, mean and full descriptive statistics.',
+    intro:
+      'Calculate the variance of your data set instantly. Paste your numbers to get both the sample variance (s²) and the population variance (σ²), along with the standard deviation, mean and a complete descriptive-statistics breakdown.',
+    api: { group: 'stats', test: 'describe' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your data',
+      sample: [[12, 15, 17, 20, 22, 25, 30, 18, 16, 19]],
+    },
+    explainerHtml: `
+      <h2>What variance measures</h2>
+      <p><strong>Variance</strong> quantifies how far a set of numbers is spread out from their mean. It is calculated by taking each value’s difference from the mean, squaring it (so positives and negatives don’t cancel out), and averaging those squared differences. Because the differences are squared, variance is in <em>squared units</em> — which is why people often take its square root, the standard deviation, to get back to the original units.</p>
+      <p>As with standard deviation, there are two versions:</p>
+      <ul>
+        <li><strong>Sample variance (s²)</strong> divides the sum of squared differences by <em>n − 1</em>. Use this when your data is a sample of a larger population.</li>
+        <li><strong>Population variance (σ²)</strong> divides by <em>n</em>. Use this when your data is the whole population.</li>
+      </ul>
+      <p>This calculator reports both, plus the standard deviation and the rest of the descriptive statistics. A larger variance means more variability in your data. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What is the difference between sample and population variance?',
+        a: 'Sample variance divides by n − 1 and is used when your data is a sample of a larger group. Population variance divides by n and is used when your data is the entire population. This tool shows both.',
+      },
+      {
+        q: 'Why is variance squared?',
+        a: 'Variance squares each deviation from the mean so that positive and negative differences do not cancel out. The trade-off is that variance is in squared units, which is why standard deviation (its square root) is often preferred for interpretation.',
+      },
+      {
+        q: 'How is variance related to standard deviation?',
+        a: 'Standard deviation is simply the square root of the variance. Variance emphasises larger deviations more (because of squaring), while standard deviation is in the same units as the data.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Calculations run in memory and the result is returned; nothing is saved.',
+      },
+    ],
+    related: ['standard-deviation-calculator', 'mean-median-mode-calculator', 'descriptive-statistics-calculator'],
+  },
+  {
+    cluster: 'statistics',
+    slug: 'descriptive-statistics-calculator',
+    primaryKeyword: 'descriptive statistics calculator',
+    title: 'Descriptive Statistics Calculator — Mean, SD, Quartiles & More',
+    h1: 'Descriptive Statistics Calculator',
+    metaDescription:
+      'Free descriptive statistics calculator. Paste your data to get count, mean, median, mode, standard deviation, variance, quartiles, IQR, skewness and kurtosis — all at once.',
+    intro:
+      'Get a complete statistical summary of your data in one click. Paste your numbers to compute count, sum, mean, median and mode, sample and population standard deviation and variance, minimum, maximum, range, quartiles, interquartile range, standard error, coefficient of variation, skewness and kurtosis.',
+    api: { group: 'stats', test: 'describe' },
+    widget: {
+      kind: 'numeric-groups',
+      groupsDefault: 1,
+      groupsFixed: true,
+      groupLabel: 'Your data',
+      sample: [[23, 29, 20, 32, 25, 27, 24, 31, 26, 28, 30, 22]],
+    },
+    explainerHtml: `
+      <h2>Reading a descriptive-statistics summary</h2>
+      <p><strong>Descriptive statistics</strong> summarise a data set with a handful of numbers that describe its centre, its spread, and its shape — the first thing any analyst looks at before doing anything more complex.</p>
+      <ul>
+        <li><strong>Centre</strong> — the mean, median and mode tell you where the typical value sits.</li>
+        <li><strong>Spread</strong> — the range, variance, standard deviation, quartiles and interquartile range (IQR) describe how dispersed the values are. The IQR (Q3 − Q1) captures the middle 50% and resists outliers.</li>
+        <li><strong>Shape</strong> — <strong>skewness</strong> measures asymmetry (positive = a long right tail; negative = a long left tail; near 0 = symmetric), while <strong>kurtosis</strong> (reported as excess kurtosis) measures how heavy the tails are compared with a normal distribution.</li>
+        <li><strong>Precision</strong> — the standard error of the mean (SEM) estimates how much the sample mean would vary from sample to sample, and the coefficient of variation (CV) expresses the standard deviation as a percentage of the mean for easy comparison across data sets.</li>
+      </ul>
+      <p>Together these give you a full picture of your data before any hypothesis testing. All values are computed in memory and nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What are descriptive statistics?',
+        a: 'Descriptive statistics are numbers that summarise a data set — measures of centre (mean, median, mode), spread (range, variance, standard deviation, IQR) and shape (skewness, kurtosis). They describe the data without drawing inferences beyond it.',
+      },
+      {
+        q: 'What does skewness tell me?',
+        a: 'Skewness measures asymmetry. Positive skew means a longer tail on the right (some high outliers), negative skew means a longer tail on the left, and a value near zero means the data is roughly symmetric.',
+      },
+      {
+        q: 'What is the interquartile range (IQR)?',
+        a: 'The IQR is the third quartile minus the first quartile (Q3 − Q1) — the range of the middle 50% of your data. It is a measure of spread that is not affected by extreme outliers.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. All statistics are computed in memory and the result is returned; nothing you enter is saved.',
+      },
+    ],
+    related: ['standard-deviation-calculator', 'mean-median-mode-calculator', 'variance-calculator'],
+  },
+
   // ── Finance · Loan amortization (one shared loan widget + pure-Python endpoint) ──
   {
     cluster: 'finance',

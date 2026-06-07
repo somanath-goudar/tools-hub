@@ -46,7 +46,10 @@ const cfg = {
     const wrap = document.createElement('div');
     wrap.className = 'calc-group';
     const label = document.createElement('label');
-    label.textContent = `${cfg.groupLabel} ${index + 1}`;
+    // Single-data-set tools (e.g. descriptive stats) use just the label, no index.
+    label.textContent = cfg.groupsDefault === 1 && cfg.groupsFixed
+      ? cfg.groupLabel
+      : `${cfg.groupLabel} ${index + 1}`;
     const ta = document.createElement('textarea');
     ta.className = 'calc-input';
     ta.rows = 4;
@@ -86,9 +89,11 @@ const cfg = {
     const rows = (data.rows || [])
       .map((r) => `<tr><th scope="row">${r[0]}</th><td>${r[1]}</td></tr>`)
       .join('');
-    const sig = data.significant
-      ? '<span class="badge badge-yes">Statistically significant</span>'
-      : '<span class="badge badge-no">Not statistically significant</span>';
+    const sig = typeof data.significant === 'boolean'
+      ? (data.significant
+          ? '<span class="badge badge-yes">Statistically significant</span>'
+          : '<span class="badge badge-no">Not statistically significant</span>')
+      : '';
     resultEl.innerHTML = `
       <h2 class="result-head">${data.title} ${sig}</h2>
       <p class="result-verdict">${data.verdict}</p>
