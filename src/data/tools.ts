@@ -50,7 +50,23 @@ export type RegexWidget = {
   replaceDefault?: string; // only used in replace mode
 };
 
-export type Widget = NumericGroupsWidget | LoanWidget | TextWidget | RegexWidget;
+export type SavingsWidget = {
+  kind: 'savings';
+  defaults: {
+    principal: number; // initial deposit
+    contribution: number; // per-period contribution
+    rate: number; // annual %
+    years: number;
+    frequency: 'monthly' | 'annually'; // contribution + compounding frequency
+  };
+};
+
+export type Widget =
+  | NumericGroupsWidget
+  | LoanWidget
+  | TextWidget
+  | RegexWidget
+  | SavingsWidget;
 
 export type ToolPage = {
   cluster: string; // cluster slug
@@ -673,6 +689,182 @@ export const TOOLS: ToolPage[] = [
       'amortization-calculator-with-extra-payments',
       'biweekly-mortgage-calculator',
     ],
+  },
+
+  // ── Finance · Compound interest / savings (shared savings widget + pure-Python `compound`) ──
+  {
+    cluster: 'finance',
+    slug: 'compound-interest-calculator',
+    primaryKeyword: 'compound interest calculator',
+    title: 'Compound Interest Calculator — Free, with Growth Chart',
+    h1: 'Compound Interest Calculator',
+    metaDescription:
+      'Free compound interest calculator. See how your money grows with regular contributions — future value, total interest earned, a year-by-year table and a growth chart. Nothing stored.',
+    intro:
+      'See exactly how compound interest grows your money over time. Enter an initial deposit, a regular monthly or annual contribution, an interest rate and a time horizon to get your future balance, total interest earned, a year-by-year breakdown and a growth chart — with a downloadable schedule.',
+    api: { group: 'finance', test: 'compound' },
+    widget: {
+      kind: 'savings',
+      defaults: { principal: 10000, contribution: 500, rate: 7, years: 20, frequency: 'monthly' },
+    },
+    explainerHtml: `
+      <h2>How compound interest works</h2>
+      <p><strong>Compound interest</strong> is interest earned on both your original money <em>and</em> on the interest it has already earned. That feedback loop is what makes savings grow faster and faster over time — Einstein reputedly called it the eighth wonder of the world. The longer your money compounds, the more dramatic the effect.</p>
+      <p>This calculator grows your balance period by period using <code>A = P(1 + r/n)<sup>nt</sup></code> for the lump sum, plus the future value of your regular contributions. Three levers drive the result:</p>
+      <ul>
+        <li><strong>Rate</strong> — even a couple of extra percentage points compounds into a large difference over decades.</li>
+        <li><strong>Time</strong> — the single most powerful factor; starting earlier beats contributing more later.</li>
+        <li><strong>Contributions</strong> — regular deposits add fresh principal that then compounds too.</li>
+      </ul>
+      <p>The growth chart shows your balance rising against the total you’ve contributed — the widening gap between the two lines is the compound interest at work. Switch between monthly and annual compounding to compare, and download the full year-by-year schedule. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What is compound interest?',
+        a: 'Compound interest is interest calculated on your initial principal and also on the accumulated interest from previous periods. Unlike simple interest, it causes balances to grow at an accelerating rate.',
+      },
+      {
+        q: 'How is compound interest calculated?',
+        a: 'For a lump sum the formula is A = P(1 + r/n)^(nt), where P is principal, r the annual rate, n the number of compounding periods per year and t the years. This tool also adds the compounded growth of your regular contributions.',
+      },
+      {
+        q: 'Does compounding more often earn more?',
+        a: 'Yes, slightly. More frequent compounding (monthly vs annually) earns a bit more because interest starts earning interest sooner. The difference grows with higher rates and longer time horizons.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Calculations run in memory and the result is returned; nothing you enter is saved.',
+      },
+    ],
+    related: ['savings-calculator', 'investment-calculator', 'savings-goal-calculator'],
+  },
+  {
+    cluster: 'finance',
+    slug: 'savings-calculator',
+    primaryKeyword: 'savings calculator',
+    title: 'Savings Calculator — Project Your Balance with Contributions',
+    h1: 'Savings Calculator',
+    metaDescription:
+      'Free savings calculator. Project how your savings grow with regular deposits and interest — future balance, total contributed, interest earned, a chart and a year-by-year table.',
+    intro:
+      'Project how much your savings will grow. Enter your starting balance, a regular deposit, your interest rate and how long you’ll save, and see your future balance, how much you contributed, how much is interest, and a year-by-year growth chart you can download.',
+    api: { group: 'finance', test: 'compound' },
+    widget: {
+      kind: 'savings',
+      defaults: { principal: 1000, contribution: 200, rate: 4, years: 10, frequency: 'monthly' },
+    },
+    explainerHtml: `
+      <h2>Planning your savings</h2>
+      <p>A <strong>savings calculator</strong> shows what consistent saving plus interest adds up to over time. The two biggest factors in your final balance are how much you put in regularly and how long you keep at it — interest then quietly multiplies the result.</p>
+      <p>The key insight most people miss is how much of the final balance comes from <strong>interest</strong> rather than deposits. Early on, your balance is almost entirely the money you put in; but over many years the interest component grows until it can rival or exceed your total contributions. The chart makes this visible: the blue balance line pulls away from the green “total contributed” line as compounding takes over.</p>
+      <p>Use it to test scenarios — what if you save $50 more a month, or for five more years, or find an account paying one point more? Each tweak updates your projected balance instantly. The full year-by-year schedule is downloadable, and nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How much will my savings grow?',
+        a: 'It depends on your starting balance, how much and how often you contribute, the interest rate and the time horizon. Enter your numbers to see the projected future balance and how much of it is interest.',
+      },
+      {
+        q: 'How much should I save each month?',
+        a: 'A common guideline is to save 15–20% of income, but the right amount depends on your goals. Use the calculator to work backwards: try different monthly amounts and see which reaches your target.',
+      },
+      {
+        q: 'What interest rate should I assume?',
+        a: 'Use the rate your savings account or investment actually pays. High-yield savings accounts and CDs vary; for long-term investing many people model a conservative average return. The tool lets you test any rate.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Everything is computed in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['compound-interest-calculator', 'investment-calculator', 'savings-goal-calculator'],
+  },
+  {
+    cluster: 'finance',
+    slug: 'investment-calculator',
+    primaryKeyword: 'investment calculator',
+    title: 'Investment Calculator — Future Value with Regular Investing',
+    h1: 'Investment Calculator',
+    metaDescription:
+      'Free investment calculator. Estimate the future value of an investment with regular contributions and compound growth — total invested, returns, a growth chart and yearly breakdown.',
+    intro:
+      'Estimate the future value of your investments. Enter an initial amount, a recurring contribution, an expected annual return and a time horizon to project your portfolio’s growth — including total invested, investment returns, a growth chart and a year-by-year breakdown.',
+    api: { group: 'finance', test: 'compound' },
+    widget: {
+      kind: 'savings',
+      defaults: { principal: 5000, contribution: 500, rate: 8, years: 30, frequency: 'monthly' },
+    },
+    explainerHtml: `
+      <h2>Projecting investment growth</h2>
+      <p>An <strong>investment calculator</strong> applies the same compound-growth maths as a savings calculator, but is usually used with a higher assumed annual return to reflect markets rather than a savings account. Because returns compound, small differences in rate and time produce enormous differences in the final amount.</p>
+      <p>The classic illustration is starting early: an investor who contributes for the first decade and then stops can end up ahead of someone who starts a decade later and contributes for far longer — purely because the early money has more time to compound. Time in the market is the dominant variable.</p>
+      <p>This tool projects your portfolio’s future value from your initial investment plus regular contributions at your chosen return, shows how much is your own money versus growth, and charts the trajectory. A few important caveats: real returns vary year to year (this assumes a steady average), and the figures are before inflation, taxes and fees. Use it for planning, not as a guarantee. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What rate of return should I use for investments?',
+        a: 'That is your choice and depends on your assets. Many people model long-term stock-market investing with a conservative average annual return, but actual returns vary widely year to year. This calculator assumes a steady average for simplicity.',
+      },
+      {
+        q: 'Does this account for inflation, taxes or fees?',
+        a: 'No. The projection is a gross figure before inflation, taxes and fees. To estimate purchasing power, you can enter an inflation-adjusted (real) rate of return instead of the nominal rate.',
+      },
+      {
+        q: 'Why does starting early matter so much?',
+        a: 'Because returns compound, money invested earlier has more time to grow on itself. Starting a decade earlier can outweigh contributing larger amounts later — time is the most powerful factor.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Calculations run in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['compound-interest-calculator', 'savings-calculator', 'savings-goal-calculator'],
+  },
+  {
+    cluster: 'finance',
+    slug: 'savings-goal-calculator',
+    primaryKeyword: 'savings goal calculator',
+    title: 'Savings Goal Calculator — See If You’ll Reach Your Target',
+    h1: 'Savings Goal Calculator',
+    metaDescription:
+      'Free savings goal calculator. Enter your deposit, monthly contribution, rate and timeframe to project your balance and see whether you’ll reach your savings goal, with a chart.',
+    intro:
+      'Find out whether your plan will reach your savings goal. Enter your current savings, your regular contribution, an interest rate and a timeframe to project your future balance — then compare it against your target to see if you’re on track, ahead, or need to save a little more.',
+    api: { group: 'finance', test: 'compound' },
+    widget: {
+      kind: 'savings',
+      defaults: { principal: 2000, contribution: 300, rate: 5, years: 5, frequency: 'monthly' },
+    },
+    explainerHtml: `
+      <h2>Reaching a savings goal</h2>
+      <p>A <strong>savings goal calculator</strong> helps you answer a concrete question: “If I save this much for this long, where will I end up?” Project your future balance, compare it to your target — a house deposit, an emergency fund, a holiday, a car — and adjust the inputs until the projection clears your goal.</p>
+      <p>There are three dials to turn when you’re short of a goal:</p>
+      <ul>
+        <li><strong>Contribute more</strong> each month — the most direct lever, and the one fully in your control.</li>
+        <li><strong>Give it more time</strong> — extending the deadline lets compounding do more of the work.</li>
+        <li><strong>Earn a higher rate</strong> — helpful, but don’t rely on it for short-term goals where market risk matters.</li>
+      </ul>
+      <p>For near-term goals (a year or two) most of the balance will be your own contributions, so saving more is what moves the needle. For long-term goals, interest does an increasing share of the lifting. Project your plan, see the year-by-year path on the chart, and tweak until you’re comfortably on track. Nothing you enter is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How do I know if I’ll reach my savings goal?',
+        a: 'Enter your current savings, regular contribution, interest rate and timeframe. The calculator projects your future balance, which you can compare against your target to see whether you are on track.',
+      },
+      {
+        q: 'What if the projection falls short of my goal?',
+        a: 'You have three options: increase your monthly contribution, extend your timeframe, or seek a higher interest rate. For short-term goals, increasing contributions is usually the most reliable lever.',
+      },
+      {
+        q: 'Should I rely on interest to reach a short-term goal?',
+        a: 'For goals within a year or two, most of your balance comes from contributions, not interest — and chasing higher returns adds risk. Compounding helps most over longer horizons.',
+      },
+      {
+        q: 'Is my data stored?',
+        a: 'No. Everything is computed in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['compound-interest-calculator', 'savings-calculator', 'investment-calculator'],
   },
 
   // ── Writing · Readability (one shared text widget + pyphen-backed endpoint) ──

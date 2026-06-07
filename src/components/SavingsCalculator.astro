@@ -1,0 +1,185 @@
+---
+import type { ToolPage, SavingsWidget } from '../data/tools';
+export interface Props { tool: ToolPage }
+const { tool } = Astro.props;
+const w = tool.widget as SavingsWidget; // this component only renders savings tools
+
+const apiBase = import.meta.env.PUBLIC_API_BASE ?? '';
+const endpoint = `${apiBase}/api/${tool.api.group}`;
+
+const cfg = {
+  endpoint,
+  test: tool.api.test,
+  defaults: w.defaults,
+};
+---
+
+<section class="calc" aria-label="Savings calculator">
+  <div class="loan-fields">
+    <label class="field">
+      <span>Initial deposit ($)</span>
+      <input type="number" id="f-principal" min="0" step="100" value={w.defaults.principal} />
+    </label>
+    <label class="field field-highlight">
+      <span>Regular contribution ($)</span>
+      <input type="number" id="f-contribution" min="0" step="50" value={w.defaults.contribution} />
+    </label>
+    <label class="field">
+      <span>Annual interest rate (%)</span>
+      <input type="number" id="f-rate" min="0" step="0.01" value={w.defaults.rate} />
+    </label>
+    <label class="field">
+      <span>Years</span>
+      <input type="number" id="f-years" min="1" step="1" value={w.defaults.years} />
+    </label>
+    <fieldset class="field field-freq">
+      <span>Contribution & compounding</span>
+      <div class="radio-row">
+        <label><input type="radio" name="freq" value="monthly" checked={w.defaults.frequency === 'monthly'} /> Monthly</label>
+        <label><input type="radio" name="freq" value="annually" checked={w.defaults.frequency === 'annually'} /> Annually</label>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="calc-actions">
+    <button type="button" id="btn-reset" class="btn btn-ghost">Reset</button>
+    <button type="button" id="btn-calc" class="btn btn-primary">Calculate</button>
+  </div>
+
+  <div id="calc-error" class="calc-error" hidden></div>
+  <div id="calc-result" class="calc-result" hidden></div>
+</section>
+
+<script define:vars={{ cfg }}>
+  const resultEl = document.getElementById('calc-result');
+  const errorEl = document.getElementById('calc-error');
+  const $ = (id) => document.getElementById(id);
+  const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+
+  function getFreq() {
+    const r = document.querySelector('input[name="freq"]:checked');
+    return r ? r.value : cfg.defaults.frequency;
+  }
+
+  function reset() {
+    $('f-principal').value = cfg.defaults.principal;
+    $('f-contribution').value = cfg.defaults.contribution;
+    $('f-rate').value = cfg.defaults.rate;
+    $('f-years').value = cfg.defaults.years;
+    const r = document.querySelector(`input[name="freq"][value="${cfg.defaults.frequency}"]`);
+    if (r) r.checked = true;
+    resultEl.hidden = true;
+    errorEl.hidden = true;
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    resultEl.hidden = true;
+  }
+
+  // ── inline SVG: balance area (rising) + total-contributions line; gap = interest ──
+  function buildChart(points) {
+    const W = 600, H = 220, padL = 8, padR = 8, padT = 12, padB = 22;
+    const maxBal = Math.max(...points.map((p) => p.balance), 1);
+    const n = points.length - 1 || 1;
+    const x = (i) => padL + (i / n) * (W - padL - padR);
+    const y = (v) => padT + (1 - v / maxBal) * (H - padT - padB);
+    const line = (key) =>
+      points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[key]).toFixed(1)}`).join(' ');
+    const area = `${line('balance')} L${x(n).toFixed(1)},${(H - padB).toFixed(1)} L${padL},${(H - padB).toFixed(1)} Z`;
+    const years = points[points.length - 1].year;
+    const ticks = [];
+    const step = years <= 7 ? 1 : years <= 15 ? 3 : 5;
+    for (let yr = 0; yr <= years; yr += step) {
+      const i = points.findIndex((p) => p.year >= yr);
+      if (i >= 0) ticks.push(`<text x="${x(i).toFixed(1)}" y="${H - 6}" font-size="10" fill="#5b6472" text-anchor="middle">${yr}y</text>`);
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="loan-chart" role="img" aria-label="Savings balance over time">
+      <path d="${area}" fill="rgba(47,91,234,.10)" stroke="none"/>
+      <path d="${line('balance')}" fill="none" stroke="#2f5bea" stroke-width="2"/>
+      <path d="${line('contributions')}" fill="none" stroke="#16794a" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#e6e9ef"/>
+      ${ticks.join('')}
+    </svg>
+    <div class="chart-legend"><span class="k k-bal">Balance</span><span class="k k-contrib">Total contributed</span></div>`;
+  }
+
+  let lastSchedule = [];
+  function downloadCsv() {
+    if (!lastSchedule.length) return;
+    const head = 'Year,Contributed this year,Total contributed,Interest this year,Balance\n';
+    const body = lastSchedule
+      .map((r) => [r.period, r.payment, r.principal, r.interest, r.balance].join(','))
+      .join('\n');
+    const blob = new Blob([head + body], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'savings-schedule.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function showResult(d) {
+    errorEl.hidden = true;
+    lastSchedule = d.schedule || [];
+    const rows = (d.rows || [])
+      .map((r) => `<tr><th scope="row">${r[0]}</th><td>${r[1]}</td></tr>`)
+      .join('');
+    const sched = (d.schedule || [])
+      .map(
+        (r) =>
+          `<tr><td>${r.period}</td><td>${money(r.payment)}</td><td>${money(r.principal)}</td><td>${money(r.interest)}</td><td>${money(r.balance)}</td></tr>`
+      )
+      .join('');
+    resultEl.innerHTML = `
+      <h2 class="result-head">${d.title}</h2>
+      <p class="result-verdict">${d.verdict}</p>
+      <table class="result-table"><tbody>${rows}</tbody></table>
+      ${buildChart(d.chart.points)}
+      <details class="sched">
+        <summary>Show year-by-year breakdown (${(d.schedule || []).length} rows)</summary>
+        <button type="button" class="btn btn-ghost btn-csv">⬇ Download CSV</button>
+        <div class="sched-scroll">
+          <table class="result-table sched-table">
+            <thead><tr><th>Year</th><th>Added</th><th>Total in</th><th>Interest</th><th>Balance</th></tr></thead>
+            <tbody>${sched}</tbody>
+          </table>
+        </div>
+      </details>`;
+    resultEl.hidden = false;
+    resultEl.querySelector('.btn-csv')?.addEventListener('click', downloadCsv);
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function calculate() {
+    const principal = parseFloat($('f-principal').value) || 0;
+    const contribution = parseFloat($('f-contribution').value) || 0;
+    const rate = parseFloat($('f-rate').value);
+    const years = parseFloat($('f-years').value);
+    if (Number.isNaN(rate) || Number.isNaN(years) || years <= 0 || (principal <= 0 && contribution <= 0)) {
+      return showError('Enter an initial deposit or contribution, plus a rate and number of years.');
+    }
+    const btn = $('btn-calc');
+    btn.disabled = true;
+    btn.textContent = 'Calculating…';
+    try {
+      const res = await fetch(cfg.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: cfg.test, principal, contribution, rate, years, frequency: getFreq() }),
+      });
+      const d = await res.json();
+      if (!res.ok || d.error) throw new Error(d.error || `Server error (${res.status})`);
+      showResult(d);
+    } catch (e) {
+      showError(e.message || 'Something went wrong.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Calculate';
+    }
+  }
+
+  $('btn-calc').addEventListener('click', calculate);
+  $('btn-reset').addEventListener('click', reset);
+</script>

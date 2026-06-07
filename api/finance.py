@@ -146,7 +146,80 @@ def amortize(p):
     }
 
 
-TESTS = {"amortize": amortize}
+def compound(p):
+    principal = float(p.get("principal", 0) or 0)
+    contribution = float(p.get("contribution", 0) or 0)
+    annual = float(p["rate"]) / 100.0
+    years = float(p["years"])
+    frequency = p.get("frequency", "monthly")
+    if years <= 0:
+        raise ValueError("Enter a positive number of years.")
+    if principal <= 0 and contribution <= 0:
+        raise ValueError("Enter an initial deposit or a regular contribution.")
+
+    ppy = 12 if frequency == "monthly" else 1
+    period_rate = annual / ppy
+    n_periods = round(years * ppy)
+
+    balance = principal
+    cum_contrib = principal
+    cum_interest = 0.0
+    yearly = []
+    pts = [{"year": 0, "balance": round(principal), "contributions": round(principal)}]
+    year_contrib = 0.0
+    year_interest = 0.0
+
+    for period in range(1, n_periods + 1):
+        interest = balance * period_rate
+        balance += interest
+        balance += contribution
+        cum_interest += interest
+        cum_contrib += contribution
+        year_contrib += contribution
+        year_interest += interest
+        if period % ppy == 0 or period == n_periods:
+            yr = period / ppy
+            yearly.append(
+                {
+                    "period": round(yr),
+                    "payment": round(year_contrib),       # contributions added this year
+                    "principal": round(cum_contrib),      # total contributed to date
+                    "interest": round(year_interest),     # interest earned this year
+                    "balance": round(balance),
+                }
+            )
+            pts.append({"year": round(yr, 2), "balance": round(balance), "contributions": round(cum_contrib)})
+            year_contrib = 0.0
+            year_interest = 0.0
+
+    fv = balance
+    total_interest = cum_interest
+    growth_pct = (total_interest / cum_contrib * 100) if cum_contrib else 0.0
+
+    rows = [
+        ["Future value", _money(fv)],
+        ["Total contributions", _money(cum_contrib)],
+        ["Total interest earned", _money(total_interest)],
+        ["Initial deposit", _money(principal)],
+        [f"Regular contribution ({'monthly' if ppy == 12 else 'annual'})", _money(contribution)],
+        ["Interest as % of contributions", f"{growth_pct:.1f}%"],
+    ]
+    verdict = (
+        f"After {round(years)} years your balance grows to {_money(fv)}. "
+        f"You contribute {_money(cum_contrib)} and earn {_money(total_interest)} in interest "
+        f"— interest is {growth_pct:.0f}% of what you put in."
+    )
+
+    return {
+        "title": "Savings growth summary",
+        "verdict": verdict,
+        "rows": rows,
+        "chart": {"points": pts},
+        "schedule": yearly,
+    }
+
+
+TESTS = {"amortize": amortize, "compound": compound}
 
 
 def compute(payload):
