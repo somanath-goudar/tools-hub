@@ -36,16 +36,21 @@ def format_json(p):
     minify = bool(p.get("minify"))
     sort = bool(p.get("sort"))
     indent_opt = p.get("indent", 2)
+    strict = bool(p.get("strict"))  # validator mode: no Python-literal fallback
 
     source = "json"
     try:
         data = json.loads(text)
     except json.JSONDecodeError as je:
-        # Fall back to a Python literal (single quotes, True/False/None, tuples).
-        try:
-            data = ast.literal_eval(text)
-            source = "python"
-        except Exception:  # noqa: BLE001 — report the original JSON error, it's more useful
+        # In strict mode a JSON error is just invalid. Otherwise fall back to a
+        # Python literal (single quotes, True/False/None, trailing commas, tuples).
+        if not strict:
+            try:
+                data = ast.literal_eval(text)
+                source = "python"
+            except Exception:  # noqa: BLE001
+                pass
+        if source == "json":  # still unparsed → report the JSON error (more useful)
             return {
                 "valid": False,
                 "title": "Invalid JSON",

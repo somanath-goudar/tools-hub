@@ -7,11 +7,14 @@ const w = tool.widget as JsonWidget; // this component only renders json tools
 const apiBase = import.meta.env.PUBLIC_API_BASE ?? '';
 const endpoint = `${apiBase}/api/${tool.api.group}`;
 
+const actionLabel = w.action ?? (w.mode === 'minify' ? 'Minify JSON' : 'Format JSON');
 const cfg = {
   endpoint,
   test: tool.api.test,
   mode: w.mode,
   sample: w.sample,
+  strict: w.strict ?? false,
+  action: actionLabel,
 };
 ---
 
@@ -34,7 +37,7 @@ const cfg = {
 
   <div class="calc-actions">
     <button type="button" id="btn-clear" class="btn btn-ghost">Clear</button>
-    <button type="button" id="btn-calc" class="btn btn-primary">{w.mode === 'minify' ? 'Minify JSON' : 'Format JSON'}</button>
+    <button type="button" id="btn-calc" class="btn btn-primary">{actionLabel}</button>
   </div>
 
   <div id="calc-error" class="calc-error" hidden></div>
@@ -96,6 +99,7 @@ const cfg = {
       indent: indentSel === 'tab' ? 'tab' : Number(indentSel),
       sort: $('json-sort').checked,
       minify: $('json-minify').checked,
+      strict: cfg.strict,
     };
     const btn = $('btn-calc');
     const orig = btn.textContent;

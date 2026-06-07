@@ -65,6 +65,8 @@ export type JsonWidget = {
   kind: 'json';
   mode: 'pretty' | 'minify';
   sample: string;
+  strict?: boolean; // validator mode: reject non-JSON instead of accepting Python literals
+  action?: string; // primary-button label override
 };
 
 export type Widget =
@@ -1521,6 +1523,8 @@ export const TOOLS: ToolPage[] = [
     widget: {
       kind: 'json',
       mode: 'pretty',
+      strict: true,
+      action: 'Validate JSON',
       sample: '{\n  "id": 42,\n  "tags": ["a", "b",],\n  "ok": true\n}',
     },
     explainerHtml: `
