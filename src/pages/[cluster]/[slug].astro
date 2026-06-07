@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Calculator from '../../components/Calculator.astro';
 import LoanCalculator from '../../components/LoanCalculator.astro';
+import TextAnalyzer from '../../components/TextAnalyzer.astro';
 import { TOOLS, getTool, getCluster } from '../../data/tools';
 
 export function getStaticPaths() {
@@ -60,7 +61,13 @@ const jsonLd = [
   <h1>{tool.h1}</h1>
   <p class="lede">{tool.intro}</p>
 
-  {tool.widget.kind === 'loan' ? <LoanCalculator tool={tool} /> : <Calculator tool={tool} />}
+  {tool.widget.kind === 'loan' ? (
+    <LoanCalculator tool={tool} />
+  ) : tool.widget.kind === 'text' ? (
+    <TextAnalyzer tool={tool} />
+  ) : (
+    <Calculator tool={tool} />
+  )}
 
   <article class="explainer" set:html={tool.explainerHtml} />
 

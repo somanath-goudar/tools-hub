@@ -33,7 +33,13 @@ export type LoanWidget = {
   showFrequency: boolean; // show the monthly/biweekly toggle
 };
 
-export type Widget = NumericGroupsWidget | LoanWidget;
+export type TextWidget = {
+  kind: 'text';
+  placeholder: string;
+  sample: string; // one-click "Try sample text"
+};
+
+export type Widget = NumericGroupsWidget | LoanWidget | TextWidget;
 
 export type ToolPage = {
   cluster: string; // cluster slug
@@ -65,7 +71,14 @@ export const CLUSTERS: Cluster[] = [
     blurb:
       'Free finance calculators with full schedules and charts — loan amortization, extra-payment and biweekly scenarios, payoff timelines. No signup, nothing stored.',
   },
-  // developer / writing clusters added as their tools are built.
+  {
+    slug: 'writing',
+    name: 'Writing',
+    emoji: '✍️',
+    blurb:
+      'Free writing calculators that score your text instantly — readability grades, reading ease, reading level and reading time. Paste your text, get plain-English feedback. No signup, nothing stored.',
+  },
+  // developer cluster added as its tools are built.
 ];
 
 export const TOOLS: ToolPage[] = [
@@ -447,6 +460,207 @@ export const TOOLS: ToolPage[] = [
       'amortization-schedule',
       'amortization-calculator-with-extra-payments',
       'biweekly-mortgage-calculator',
+    ],
+  },
+
+  // ── Writing · Readability (one shared text widget + pyphen-backed endpoint) ──
+  {
+    cluster: 'writing',
+    slug: 'readability-checker',
+    primaryKeyword: 'readability checker',
+    title: 'Readability Checker — Free, Instant Reading Score & Grade Level',
+    h1: 'Readability Checker',
+    metaDescription:
+      'Free readability checker. Paste your text to get the Flesch Reading Ease score, grade level, Gunning Fog, SMOG, Coleman-Liau and ARI — with plain-English feedback. Nothing stored.',
+    intro:
+      'Paste any text and instantly see how readable it is. This readability checker reports the Flesch Reading Ease score, a consensus grade level, and five standard readability formulas (Flesch-Kincaid, Gunning Fog, SMOG, Coleman-Liau and ARI) — plus word, sentence and complex-word counts — so you can edit toward clearer, simpler writing.',
+    api: { group: 'text', test: 'readability' },
+    widget: {
+      kind: 'text',
+      placeholder: 'Paste your text here — an article, email, essay or paragraph (at least 10 words)…',
+      sample:
+        'Good writing is clear writing. When you keep your sentences short and choose plain words, more people understand you the first time they read your work. Long, tangled sentences full of jargon force readers to slow down and reread, and many simply give up. Aim for one idea per sentence, prefer common words over fancy ones, and read your draft aloud to catch anything that trips the tongue.',
+    },
+    explainerHtml: `
+      <h2>What a readability score actually measures</h2>
+      <p>A <strong>readability score</strong> estimates how much education a reader needs to understand your text on the first try. Almost every formula combines two signals: <strong>sentence length</strong> (words per sentence) and <strong>word difficulty</strong> (syllables or letters per word). Short sentences made of short words score as easy; long sentences packed with multi-syllable words score as hard.</p>
+      <p>This checker runs six well-established formulas at once so you are not relying on a single number:</p>
+      <ul>
+        <li><strong>Flesch Reading Ease</strong> — a 0–100 score where higher is easier. 60–70 is plain English aimed at the general public.</li>
+        <li><strong>Flesch-Kincaid Grade</strong> — translates that into a U.S. school grade level.</li>
+        <li><strong>Gunning Fog</strong>, <strong>SMOG</strong>, <strong>Coleman-Liau</strong> and <strong>ARI</strong> — independent grade-level estimates that weight word and sentence complexity differently.</li>
+      </ul>
+      <p>Because each formula has quirks, the <strong>consensus grade level</strong> — the average of the grade-based scores — is usually the most reliable single takeaway. Syllables are counted with a built-in hyphenation dictionary, so the analysis runs entirely on the server in milliseconds; your text is never stored.</p>
+      <p>To lower a score, the fastest wins are: split long sentences, swap multi-syllable words for everyday ones, and cut filler. Aiming for Grade 8 or below makes text comfortable for a general audience, which is why most newspapers and marketing copy target that range.</p>
+    `,
+    faq: [
+      {
+        q: 'What is a good readability score?',
+        a: 'For general audiences, aim for a Flesch Reading Ease of 60–70 and a grade level around 7–8. Most newspapers and popular websites write at roughly an 8th-grade level so the widest audience can follow easily.',
+      },
+      {
+        q: 'How is the reading grade level calculated?',
+        a: 'Each formula combines average sentence length with average word difficulty (syllables or letters per word). This tool averages five grade-based formulas — Flesch-Kincaid, Gunning Fog, SMOG, Coleman-Liau and ARI — into a single consensus grade.',
+      },
+      {
+        q: 'How many words do I need to paste?',
+        a: 'At least 10 words, but readability formulas are statistical, so the longer the sample the more reliable the result. A few paragraphs gives a much steadier score than a single sentence.',
+      },
+      {
+        q: 'Is my text stored or used to train anything?',
+        a: 'No. Your text is sent to the calculator, scored in memory, and the result is returned. Nothing is saved and nothing is used for any other purpose.',
+      },
+    ],
+    related: [
+      'flesch-kincaid-calculator',
+      'gunning-fog-index-calculator',
+      'reading-level-calculator',
+    ],
+  },
+  {
+    cluster: 'writing',
+    slug: 'flesch-kincaid-calculator',
+    primaryKeyword: 'flesch kincaid calculator',
+    title: 'Flesch-Kincaid Calculator — Reading Ease & Grade Level, Free',
+    h1: 'Flesch-Kincaid Calculator',
+    metaDescription:
+      'Free Flesch-Kincaid calculator. Paste your text to get the Flesch Reading Ease score and the Flesch-Kincaid Grade Level instantly, with the other major readability formulas alongside.',
+    intro:
+      'Calculate the Flesch Reading Ease score and the Flesch-Kincaid Grade Level for any text. Paste your writing to see both Flesch scores plus Gunning Fog, SMOG, Coleman-Liau and ARI for comparison — with a plain-English reading-level verdict you can act on.',
+    api: { group: 'text', test: 'readability' },
+    widget: {
+      kind: 'text',
+      placeholder: 'Paste your text to compute its Flesch Reading Ease and Flesch-Kincaid grade…',
+      sample:
+        'The Flesch reading tests are the most widely used readability formulas in the world. Rudolf Flesch developed the Reading Ease score in 1948, and it was later adapted with John Kincaid into a grade-level formula for the United States Navy. Today the same two formulas are built into popular word processors and are used to keep government forms, insurance policies and school materials readable for ordinary people.',
+    },
+    explainerHtml: `
+      <h2>Flesch Reading Ease vs Flesch-Kincaid Grade Level</h2>
+      <p>The two Flesch formulas use the <em>same</em> inputs — average words per sentence and average syllables per word — but report on different scales.</p>
+      <p><strong>Flesch Reading Ease</strong> is a 0–100 score where <em>higher means easier</em>:</p>
+      <p style="margin-left:1rem"><code>206.835 − 1.015 × (words ÷ sentences) − 84.6 × (syllables ÷ words)</code></p>
+      <p>Roughly: 90–100 is very easy (5th grade), 60–70 is plain English (8th–9th grade), and below 30 is very difficult (college-graduate level).</p>
+      <p><strong>Flesch-Kincaid Grade Level</strong> rescales the same signals into a U.S. school grade so the number <em>is</em> the reading level:</p>
+      <p style="margin-left:1rem"><code>0.39 × (words ÷ sentences) + 11.8 × (syllables ÷ words) − 15.59</code></p>
+      <p>A result of 8.0 means an average 8th grader should understand the text. Because the two formulas move in opposite directions, a high Reading Ease score lines up with a low grade level — both signalling easier text. This calculator computes both at once, along with four other formulas so you can sanity-check the grade.</p>
+    `,
+    faq: [
+      {
+        q: 'What is the difference between Flesch Reading Ease and Flesch-Kincaid Grade Level?',
+        a: 'They use the same inputs but different scales. Reading Ease is 0–100 where higher is easier; Flesch-Kincaid Grade Level converts that into a U.S. school grade, where the number is the grade a reader needs.',
+      },
+      {
+        q: 'What is a good Flesch Reading Ease score?',
+        a: 'For a general audience, 60–70 is the sweet spot — plain English readable by most adults. Scores above 70 are easy and breezy; scores below 50 are fairly difficult and suit a specialist or academic audience.',
+      },
+      {
+        q: 'How do I lower my Flesch-Kincaid grade level?',
+        a: 'Shorten sentences and replace long, multi-syllable words with shorter everyday ones. Both changes reduce the two inputs the formula depends on, pulling the grade level down.',
+      },
+      {
+        q: 'Is the calculation the same as Microsoft Word?',
+        a: 'It uses the identical published Flesch and Flesch-Kincaid formulas. Tiny differences can occur because tools count syllables and sentences slightly differently, but results are directly comparable.',
+      },
+    ],
+    related: [
+      'readability-checker',
+      'gunning-fog-index-calculator',
+      'reading-level-calculator',
+    ],
+  },
+  {
+    cluster: 'writing',
+    slug: 'gunning-fog-index-calculator',
+    primaryKeyword: 'gunning fog index calculator',
+    title: 'Gunning Fog Index Calculator — Free, Instant Fog Score',
+    h1: 'Gunning Fog Index Calculator',
+    metaDescription:
+      'Free Gunning Fog Index calculator. Paste your text to get the Fog score (years of education needed to read it), with complex-word count and the other major readability formulas.',
+    intro:
+      'Calculate the Gunning Fog Index for any text. Paste your writing to get the Fog score — an estimate of the years of formal education a reader needs — along with the complex-word count that drives it, and the Flesch, SMOG, Coleman-Liau and ARI scores for comparison.',
+    api: { group: 'text', test: 'readability' },
+    widget: {
+      kind: 'text',
+      placeholder: 'Paste your text to compute its Gunning Fog Index…',
+      sample:
+        'The Gunning Fog Index was created by businessman Robert Gunning in 1952, after he became convinced that newspapers and business writing were full of needless complexity he called fog. The formula rewards short sentences and penalises complex words of three or more syllables. A passage with a Fog Index of twelve requires the reading level of a high-school senior, while well-written material for a broad audience usually scores between eight and ten.',
+    },
+    explainerHtml: `
+      <h2>How the Gunning Fog Index works</h2>
+      <p>The <strong>Gunning Fog Index</strong> estimates the number of years of formal education a person needs to understand a piece of text on the first reading. A score of 12 means a high-school senior could read it; a score of 16 means a college graduate. The formula is:</p>
+      <p style="margin-left:1rem"><code>0.4 × [ (words ÷ sentences) + 100 × (complex words ÷ words) ]</code></p>
+      <p><strong>Complex words</strong> are the heart of the index: words with <em>three or more syllables</em>. The more polysyllabic words you pack in, and the longer your sentences, the higher (foggier) the score. This is why the fastest way to clear fog is to break up long sentences and swap heavy words for plain ones.</p>
+      <p>Robert Gunning designed the index in 1952 specifically for business and news writing, and it remains a favourite for evaluating reports, manuals and corporate communications. As a rule of thumb: aim for a Fog Index under 12 for a general audience, and under 10 for writing meant to be effortless. This calculator shows the complex-word count it found so you can see exactly what is driving your score, and reports five other formulas alongside it.</p>
+    `,
+    faq: [
+      {
+        q: 'What is a good Gunning Fog Index score?',
+        a: 'Under 12 is readable for a wide audience (high-school level), and under 10 is comfortable for almost everyone. Scores above 14–16 indicate dense, specialist or academic writing that many readers will struggle with.',
+      },
+      {
+        q: 'What counts as a complex word in the Fog Index?',
+        a: 'A complex (polysyllabic) word is one with three or more syllables. This calculator counts those and shows the total, since reducing them is the most direct way to lower your Fog score.',
+      },
+      {
+        q: 'How can I reduce my Gunning Fog score?',
+        a: 'Two levers: shorten your sentences, and replace three-plus-syllable words with shorter everyday alternatives. Both directly reduce the terms in the formula.',
+      },
+      {
+        q: 'Is the Gunning Fog Index better than Flesch-Kincaid?',
+        a: 'Neither is strictly better — they weight word difficulty differently. Fog focuses on complex-word density, Flesch-Kincaid on average syllables per word. Using both, as this tool does, gives a more robust picture.',
+      },
+    ],
+    related: [
+      'readability-checker',
+      'flesch-kincaid-calculator',
+      'reading-level-calculator',
+    ],
+  },
+  {
+    cluster: 'writing',
+    slug: 'reading-level-calculator',
+    primaryKeyword: 'reading level calculator',
+    title: 'Reading Level Calculator — Free Grade Level & Reading Time',
+    h1: 'Reading Level Calculator',
+    metaDescription:
+      'Free reading level calculator. Paste your text to get its grade level, reading ease, estimated reading time and complexity — averaged across six readability formulas. Nothing stored.',
+    intro:
+      'Find the reading level of any text in seconds. Paste your writing to get a consensus grade level averaged across six readability formulas, the Flesch Reading Ease score, estimated reading time, and the sentence- and word-complexity stats behind the number — all in plain English.',
+    api: { group: 'text', test: 'readability' },
+    widget: {
+      kind: 'text',
+      placeholder: 'Paste your text to find its reading level…',
+      sample:
+        'Knowing the reading level of your writing helps you match it to your audience. A children s book should sit around a second or third grade level, a popular blog post around eighth grade, and a legal contract often climbs past the level of a college graduate. By measuring the grade level before you publish, you can decide whether to simplify your words and shorten your sentences so the right readers can follow along without effort.',
+    },
+    explainerHtml: `
+      <h2>What "reading level" means and how to use it</h2>
+      <p>A <strong>reading level</strong> expresses how hard a text is as a U.S. school grade: Grade 5 is upper-elementary, Grade 8 is middle school, Grade 12 is a high-school senior, and Grade 13+ is college and beyond. Matching your reading level to your audience is one of the highest-leverage edits you can make — text that is two grades above its readers loses them quickly.</p>
+      <p>Different formulas can disagree by a grade or two, so this calculator reports a <strong>consensus reading level</strong>: the average of five grade-based formulas (Flesch-Kincaid, Gunning Fog, SMOG, Coleman-Liau and ARI). That smooths out the quirks of any single formula and gives you one number to act on, backed by the individual scores if you want to dig in.</p>
+      <p>Typical targets: general-public web content and email aim for <strong>Grade 7–8</strong>; clear instructions and health information aim for <strong>Grade 6</strong> or below; academic and technical writing naturally runs <strong>Grade 13+</strong>. The tool also estimates <strong>reading time</strong> at an average adult pace so you know how long your piece takes to get through. Nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What reading level should I write for?',
+        a: 'For a general audience, aim for Grade 7–8. For instructions, forms or health content meant to reach everyone, aim for Grade 6 or lower. Academic and technical writing naturally sits higher, around college level.',
+      },
+      {
+        q: 'How is the consensus reading level calculated?',
+        a: 'It averages five established grade-level formulas — Flesch-Kincaid, Gunning Fog, SMOG, Coleman-Liau and ARI. Averaging reduces the error any single formula can introduce, giving a steadier estimate.',
+      },
+      {
+        q: 'How is reading time estimated?',
+        a: 'From the word count at an average adult silent-reading speed of about 230 words per minute. It is an estimate — dense or technical text takes longer, familiar text goes faster.',
+      },
+      {
+        q: 'Can I lower the reading level of my text?',
+        a: 'Yes. Shorten sentences, use shorter and more common words, and keep one idea per sentence. Re-paste your edited text to watch the grade level drop.',
+      },
+    ],
+    related: [
+      'readability-checker',
+      'flesch-kincaid-calculator',
+      'gunning-fog-index-calculator',
     ],
   },
 ];

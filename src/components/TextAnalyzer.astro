@@ -1,0 +1,140 @@
+---
+import type { ToolPage, TextWidget } from '../data/tools';
+export interface Props { tool: ToolPage }
+const { tool } = Astro.props;
+const w = tool.widget as TextWidget; // this component only renders text tools
+
+// API base: same-origin in prod (/api/<group>). Overridable for local dev via PUBLIC_API_BASE.
+const apiBase = import.meta.env.PUBLIC_API_BASE ?? '';
+const endpoint = `${apiBase}/api/${tool.api.group}`;
+
+const cfg = {
+  endpoint,
+  test: tool.api.test,
+  placeholder: w.placeholder,
+  sample: w.sample,
+};
+---
+
+<section class="calc" aria-label="Readability analyzer">
+  <label class="calc-label" for="text-input">Your text</label>
+  <textarea id="text-input" class="calc-input text-input" rows="9" placeholder={w.placeholder}></textarea>
+  <div class="text-meta"><span id="live-count">0 words</span></div>
+
+  <div class="calc-actions">
+    <button type="button" id="btn-sample" class="btn btn-ghost">Try sample text</button>
+    <button type="button" id="btn-clear" class="btn btn-ghost">Clear</button>
+    <button type="button" id="btn-calc" class="btn btn-primary">Analyze readability</button>
+  </div>
+
+  <div id="calc-error" class="calc-error" hidden></div>
+  <div id="calc-result" class="calc-result" hidden></div>
+</section>
+
+<script define:vars={{ cfg }}>
+  const input = document.getElementById('text-input');
+  const resultEl = document.getElementById('calc-result');
+  const errorEl = document.getElementById('calc-error');
+  const liveCount = document.getElementById('live-count');
+
+  function countWords(t) {
+    const m = t.trim().match(/[A-Za-z][A-Za-z'']*/g);
+    return m ? m.length : 0;
+  }
+
+  function updateCount() {
+    const n = countWords(input.value);
+    liveCount.textContent = `${n} word${n === 1 ? '' : 's'}`;
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    resultEl.hidden = true;
+  }
+
+  // Inline SVG gauge for Flesch Reading Ease (0–100, higher = easier).
+  function easeGauge(ease) {
+    const pct = Math.max(0, Math.min(100, ease));
+    const x = (pct / 100) * 300;
+    return `
+      <svg class="ease-gauge" viewBox="0 0 300 54" width="100%" height="54" role="img"
+           aria-label="Flesch Reading Ease ${pct} out of 100">
+        <defs>
+          <linearGradient id="easeGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#dc2626"/>
+            <stop offset="50%" stop-color="#f59e0b"/>
+            <stop offset="100%" stop-color="#16a34a"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="30" width="300" height="10" rx="5" fill="url(#easeGrad)"/>
+        <polygon points="${x - 6},22 ${x + 6},22 ${x},32" fill="#111"/>
+        <text x="${Math.max(12, Math.min(288, x))}" y="16" text-anchor="middle"
+              font-size="13" font-weight="700" fill="#111">${pct}</text>
+        <text x="2" y="52" font-size="10" fill="#6b7280">Hard</text>
+        <text x="298" y="52" font-size="10" fill="#6b7280" text-anchor="end">Easy</text>
+      </svg>`;
+  }
+
+  function showResult(data) {
+    errorEl.hidden = true;
+    const rows = (data.rows || [])
+      .map((r) => `<tr><th scope="row">${r[0]}</th><td>${r[1]}</td></tr>`)
+      .join('');
+    const h = data.headline || {};
+    resultEl.innerHTML = `
+      <div class="headline-card">
+        <div class="headline-value">${h.value || ''}</div>
+        <div class="headline-label">${h.label || ''}</div>
+        ${h.sub ? `<div class="headline-sub">${h.sub}</div>` : ''}
+      </div>
+      ${typeof data.ease === 'number'
+        ? `<div class="ease-wrap"><div class="ease-head">Flesch Reading Ease: <strong>${data.ease}</strong> (${data.easeLabel || ''})</div>${easeGauge(data.ease)}</div>`
+        : ''}
+      <p class="result-verdict">${data.verdict || ''}</p>
+      <table class="result-table"><tbody>${rows}</tbody></table>
+    `;
+    resultEl.hidden = false;
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function analyze() {
+    const text = input.value;
+    if (countWords(text) < 10) {
+      return showError('Please paste at least 10 words for a reliable readability score.');
+    }
+    const btn = document.getElementById('btn-calc');
+    btn.disabled = true;
+    btn.textContent = 'Analyzing…';
+    try {
+      const res = await fetch(cfg.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: cfg.test, text }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || `Server error (${res.status})`);
+      showResult(data);
+    } catch (e) {
+      showError(e.message || 'Something went wrong.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Analyze readability';
+    }
+  }
+
+  // ── wire up ──
+  input.addEventListener('input', updateCount);
+  document.getElementById('btn-calc').addEventListener('click', analyze);
+  document.getElementById('btn-sample').addEventListener('click', () => {
+    input.value = cfg.sample;
+    updateCount();
+  });
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    input.value = '';
+    updateCount();
+    resultEl.hidden = true;
+    errorEl.hidden = true;
+  });
+  updateCount();
+</script>
