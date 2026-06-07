@@ -39,7 +39,16 @@ export type TextWidget = {
   sample: string; // one-click "Try sample text"
 };
 
-export type Widget = NumericGroupsWidget | LoanWidget | TextWidget;
+export type RegexWidget = {
+  kind: 'regex';
+  mode: 'match' | 'replace';
+  patternDefault: string;
+  flagsDefault: string[]; // subset of IGNORECASE|MULTILINE|DOTALL|VERBOSE|ASCII
+  testDefault: string;
+  replaceDefault?: string; // only used in replace mode
+};
+
+export type Widget = NumericGroupsWidget | LoanWidget | TextWidget | RegexWidget;
 
 export type ToolPage = {
   cluster: string; // cluster slug
@@ -78,7 +87,13 @@ export const CLUSTERS: Cluster[] = [
     blurb:
       'Free writing calculators that score your text instantly — readability grades, reading ease, reading level and reading time. Paste your text, get plain-English feedback. No signup, nothing stored.',
   },
-  // developer cluster added as its tools are built.
+  {
+    slug: 'developer',
+    name: 'Developer',
+    emoji: '💻',
+    blurb:
+      'Free developer tools that run real Python under the hood — regex tester (Python re flavor), pattern matching, capture groups and substitution. No signup, nothing stored.',
+  },
 ];
 
 export const TOOLS: ToolPage[] = [
@@ -662,6 +677,202 @@ export const TOOLS: ToolPage[] = [
       'flesch-kincaid-calculator',
       'gunning-fog-index-calculator',
     ],
+  },
+
+  // ── Developer · Regex (one shared regex widget + stdlib `re` endpoint) ──
+  {
+    cluster: 'developer',
+    slug: 'python-regex-tester',
+    primaryKeyword: 'python regex tester',
+    title: 'Python Regex Tester — Test re Patterns Online, Free',
+    h1: 'Python Regex Tester',
+    metaDescription:
+      'Free online Python regex tester. Test your pattern against text using Python’s actual re engine — see every match, capture groups, named groups and offsets, with live flags. Nothing stored.',
+    intro:
+      'Test regular expressions against the real Python re engine, right in your browser. Enter a pattern and test string to see every match highlighted, with capture groups, named groups and character offsets — and toggle flags like IGNORECASE, MULTILINE, DOTALL and VERBOSE. Because it runs Python, not JavaScript, the results match exactly what re.finditer would give you in your own code.',
+    api: { group: 'regex', test: 'match' },
+    widget: {
+      kind: 'regex',
+      mode: 'match',
+      patternDefault: '(?P<user>\\w+)@(?P<domain>\\w+\\.\\w+)',
+      flagsDefault: ['IGNORECASE'],
+      testDefault: 'Email alice@example.com or BOB@Site.ORG for details. Bad: notanemail.',
+    },
+    explainerHtml: `
+      <h2>Why test regex with Python instead of JavaScript?</h2>
+      <p>Most online regex testers run in your browser, which means they use the <strong>JavaScript</strong> regex engine. But Python’s <code>re</code> module has a <em>different flavour</em>, and a pattern that works in one can behave differently — or not compile at all — in the other. This tester runs your pattern through Python’s actual <code>re</code> engine on the server, so what you see is exactly what your Python code will do.</p>
+      <p>Differences that bite people include:</p>
+      <ul>
+        <li><strong>Named groups</strong> use <code>(?P&lt;name&gt;...)</code> in Python, not <code>(?&lt;name&gt;...)</code>.</li>
+        <li><strong>Backreferences</strong> in substitutions use <code>\\1</code> or <code>\\g&lt;name&gt;</code>, not <code>$1</code>.</li>
+        <li><strong>re.VERBOSE</strong> (the <code>X</code> flag) lets you write multi-line, commented patterns — there is no JavaScript equivalent.</li>
+        <li><strong>Inline flags</strong>, possessive quantifiers and other syntax differ subtly between engines.</li>
+      </ul>
+      <p>Enter a pattern and some text, flip on the flags you need, and every match is highlighted inline. Each match is broken out with its numbered and named capture groups and its start/end offsets — the same values <code>match.start()</code> and <code>match.group()</code> return in code. If your pattern has a syntax error, you get Python’s exact error message, which is the fastest way to debug a regex that won’t compile. Nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'Does this use the real Python regex engine?',
+        a: 'Yes. Your pattern and text are sent to a Python function that runs re.finditer, so the matches, groups and offsets are exactly what your own Python code would produce — not a JavaScript approximation.',
+      },
+      {
+        q: 'How do named groups work in Python regex?',
+        a: 'Python uses the syntax (?P<name>...) to define a named group and (?P=name) to backreference it. This differs from JavaScript’s (?<name>...). The tester shows each named group’s captured value.',
+      },
+      {
+        q: 'What do the flags do?',
+        a: 'IGNORECASE matches regardless of case, MULTILINE makes ^ and $ match at line breaks, DOTALL makes . match newlines, VERBOSE allows whitespace and comments in the pattern, and ASCII restricts \\w, \\d, \\s to ASCII.',
+      },
+      {
+        q: 'Is my pattern or test data stored?',
+        a: 'No. The pattern and text are evaluated in memory and the result is returned. Nothing is saved.',
+      },
+    ],
+    related: ['regex-capture-groups', 'regex-findall', 'regex-replace'],
+  },
+  {
+    cluster: 'developer',
+    slug: 'regex-capture-groups',
+    primaryKeyword: 'regex capture groups',
+    title: 'Regex Capture Groups Tester — See Numbered & Named Groups',
+    h1: 'Regex Capture Groups Tester',
+    metaDescription:
+      'Free regex capture-groups tester. Run a Python pattern and see exactly what each numbered and named group captures for every match, with offsets. Great for debugging group indexes.',
+    intro:
+      'See exactly what every capture group grabs. Enter a Python regex with parentheses and a test string, and this tester breaks out each match into its numbered groups (\\1, \\2, …) and named groups ((?P<name>…)), so you can confirm group indexes before you write match.group(n) in your code.',
+    api: { group: 'regex', test: 'match' },
+    widget: {
+      kind: 'regex',
+      mode: 'match',
+      patternDefault: '(\\d{4})-(\\d{2})-(\\d{2})',
+      flagsDefault: [],
+      testDefault: 'Invoices dated 2026-06-07 and 2025-12-31 are overdue.',
+    },
+    explainerHtml: `
+      <h2>Understanding capture groups</h2>
+      <p>A <strong>capture group</strong> is any part of a pattern wrapped in parentheses. Each group captures the text it matched so you can pull it out afterwards. Groups are numbered <em>left to right by their opening parenthesis</em>, starting at 1 — group 0 is always the whole match. So in <code>(\\d{4})-(\\d{2})-(\\d{2})</code>, group 1 is the year, group 2 the month, group 3 the day.</p>
+      <p><strong>Named groups</strong> let you label a group instead of counting parentheses: <code>(?P&lt;year&gt;\\d{4})</code>. You then read it with <code>match.group('year')</code> or from <code>match.groupdict()</code>. Naming makes patterns far easier to maintain because inserting a new group earlier in the pattern won’t silently shift all your indexes.</p>
+      <p>This tester lists, for every match, the value captured by each numbered <em>and</em> named group. If an optional group like <code>(abc)?</code> didn’t participate in the match, its value is shown as <code>None</code> — exactly what Python returns. That makes it easy to spot off-by-one group-index bugs before they reach your code. Use a <strong>non-capturing group</strong> <code>(?:...)</code> when you need grouping for alternation or quantifiers but don’t want it to consume a group number.</p>
+    `,
+    faq: [
+      {
+        q: 'How are regex capture groups numbered?',
+        a: 'Groups are numbered by the position of their opening parenthesis, left to right, starting at 1. Group 0 is the entire match. Nested groups are numbered by their opening bracket too.',
+      },
+      {
+        q: 'What is the difference between a capturing and non-capturing group?',
+        a: 'A capturing group (...) stores what it matched and gets a group number. A non-capturing group (?:...) groups for alternation or quantifiers without capturing, so it does not consume a group number.',
+      },
+      {
+        q: 'Why does a group show None?',
+        a: 'If a group is optional (for example (abc)?) and did not take part in the match, Python returns None for that group. The tester shows None so you can see exactly which groups participated.',
+      },
+      {
+        q: 'How do I name a group in Python?',
+        a: 'Use (?P<name>...) to capture into a named group, then read it with match.group("name") or match.groupdict(). Named groups make patterns easier to maintain than numbered ones.',
+      },
+    ],
+    related: ['python-regex-tester', 'regex-findall', 'regex-replace'],
+  },
+  {
+    cluster: 'developer',
+    slug: 'regex-findall',
+    primaryKeyword: 'regex find all matches',
+    title: 'Regex Find All Matches — Extract Every Match Online (Python)',
+    h1: 'Regex Find All Matches',
+    metaDescription:
+      'Free tool to find all regex matches in text. Paste a Python pattern and a string to extract every non-overlapping match (like re.findall / re.finditer), highlighted with offsets.',
+    intro:
+      'Extract every match of a pattern from your text, the way Python’s re.findall and re.finditer do. Paste a pattern and a block of text to get all non-overlapping matches highlighted inline, counted, and listed with their positions — perfect for pulling emails, numbers, tags or IDs out of a log or document.',
+    api: { group: 'regex', test: 'match' },
+    widget: {
+      kind: 'regex',
+      mode: 'match',
+      patternDefault: '#\\w+',
+      flagsDefault: [],
+      testDefault: 'Loving the #sunset and #beach vibes today! #Travel #travel again.',
+    },
+    explainerHtml: `
+      <h2>Finding every match in a string</h2>
+      <p>Often you don’t want just the first match — you want <em>all</em> of them: every email in a document, every hashtag in a post, every error code in a log. In Python that’s the job of <code>re.findall</code> (which returns the matched strings) and <code>re.finditer</code> (which returns full match objects with positions and groups). This tool runs <code>finditer</code>, so you get the count, the highlighted matches in context, and each match’s start/end offset.</p>
+      <p>A few things worth knowing about finding all matches:</p>
+      <ul>
+        <li>Matches are <strong>non-overlapping</strong> — after each match, scanning resumes at the end of it. Overlapping matches need lookaheads.</li>
+        <li>The <strong>global</strong> behaviour is automatic in Python — there is no <code>g</code> flag like JavaScript; <code>findall</code> always scans the whole string.</li>
+        <li>Add <strong>IGNORECASE</strong> to catch <code>#Travel</code> and <code>#travel</code> together, or keep it off to treat them separately.</li>
+        <li>If your pattern has groups, <code>re.findall</code> returns the groups instead of the whole match — use this tester (which shows both the full match and its groups) to avoid that gotcha.</li>
+      </ul>
+      <p>The results highlight every match inside your original text so you can see precisely what was caught and what was skipped. Nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What is the difference between re.findall and re.finditer?',
+        a: 're.findall returns a list of the matched strings (or group tuples if the pattern has groups). re.finditer returns match objects with positions and groups. This tool uses finditer so you get matches, offsets and groups together.',
+      },
+      {
+        q: 'Why does re.findall return tuples instead of full matches?',
+        a: 'When your pattern contains capture groups, re.findall returns the groups rather than the entire match. To get the whole match, use finditer (as this tool does) or remove the groups / make them non-capturing.',
+      },
+      {
+        q: 'Can regex find overlapping matches?',
+        a: 'Not by default — matches are non-overlapping, so scanning continues after each match. To find overlapping matches you wrap the pattern in a lookahead, e.g. (?=(your-pattern)).',
+      },
+      {
+        q: 'Does Python need a global flag like JavaScript?',
+        a: 'No. Python’s findall and finditer always scan the entire string, so there is no equivalent of JavaScript’s g flag.',
+      },
+    ],
+    related: ['python-regex-tester', 'regex-capture-groups', 'regex-replace'],
+  },
+  {
+    cluster: 'developer',
+    slug: 'regex-replace',
+    primaryKeyword: 'regex replace online',
+    title: 'Regex Replace Online — Test re.sub Substitutions, Free',
+    h1: 'Regex Replace (re.sub) Tester',
+    metaDescription:
+      'Free online regex replace tool. Test Python re.sub substitutions — use \\1 and \\g<name> backreferences in the replacement, see the result and replacement count instantly.',
+    intro:
+      'Test regex find-and-replace the way Python’s re.sub does it. Enter a pattern, a replacement string (with \\1 or \\g<name> backreferences), and your text to see the substituted result and how many replacements were made — before you run it on real files or in your code.',
+    api: { group: 'regex', test: 'replace' },
+    widget: {
+      kind: 'regex',
+      mode: 'replace',
+      patternDefault: '(\\d{4})-(\\d{2})-(\\d{2})',
+      flagsDefault: [],
+      testDefault: 'Due 2026-06-07, paid 2025-12-31.',
+      replaceDefault: '\\3/\\2/\\1',
+    },
+    explainerHtml: `
+      <h2>How re.sub substitutions work</h2>
+      <p>Python’s <code>re.sub(pattern, replacement, text)</code> replaces every non-overlapping match of <em>pattern</em> with <em>replacement</em> and returns the new string. This tester uses <code>re.subn</code>, which does the same thing but also tells you <strong>how many replacements</strong> were made — handy for confirming your pattern hit exactly what you expected.</p>
+      <p>The real power is in the replacement string, where you can reference what you captured:</p>
+      <ul>
+        <li><strong>Numbered backreferences</strong> — <code>\\1</code>, <code>\\2</code>, … insert the text captured by that group. Reordering a date from <code>YYYY-MM-DD</code> to <code>DD/MM/YYYY</code> is just <code>\\3/\\2/\\1</code>.</li>
+        <li><strong>Named backreferences</strong> — <code>\\g&lt;name&gt;</code> inserts a named group, and <code>\\g&lt;0&gt;</code> inserts the whole match.</li>
+        <li>Note Python uses <code>\\1</code>, <strong>not</strong> JavaScript’s <code>$1</code> — a common source of confusion.</li>
+      </ul>
+      <p>Add flags like <strong>IGNORECASE</strong> or <strong>MULTILINE</strong> to control matching, type your replacement, and the output updates so you can verify the transformation before committing it. Nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How do backreferences work in re.sub?',
+        a: 'In the replacement string, \\1, \\2, … insert the text captured by that numbered group, and \\g<name> inserts a named group. \\g<0> inserts the entire match. Python uses \\1, not JavaScript’s $1.',
+      },
+      {
+        q: 'How can I count how many replacements were made?',
+        a: 'Use re.subn, which returns both the new string and the number of substitutions. This tester reports the replacement count for you automatically.',
+      },
+      {
+        q: 'Why is my replacement not substituting groups?',
+        a: 'Make sure you use Python syntax: \\1 or \\g<1> for numbered groups and \\g<name> for named ones. The dollar-sign syntax ($1) from JavaScript does not work in Python’s re.sub.',
+      },
+      {
+        q: 'Is my text stored?',
+        a: 'No. The substitution runs in memory and only the result is returned; nothing you enter is saved.',
+      },
+    ],
+    related: ['python-regex-tester', 'regex-capture-groups', 'regex-findall'],
   },
 ];
 

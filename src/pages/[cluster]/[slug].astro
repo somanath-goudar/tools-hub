@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Calculator from '../../components/Calculator.astro';
 import LoanCalculator from '../../components/LoanCalculator.astro';
 import TextAnalyzer from '../../components/TextAnalyzer.astro';
+import RegexTester from '../../components/RegexTester.astro';
 import { TOOLS, getTool, getCluster } from '../../data/tools';
 
 export function getStaticPaths() {
@@ -65,6 +66,8 @@ const jsonLd = [
     <LoanCalculator tool={tool} />
   ) : tool.widget.kind === 'text' ? (
     <TextAnalyzer tool={tool} />
+  ) : tool.widget.kind === 'regex' ? (
+    <RegexTester tool={tool} />
   ) : (
     <Calculator tool={tool} />
   )}

@@ -1,0 +1,172 @@
+---
+import type { ToolPage, RegexWidget } from '../data/tools';
+export interface Props { tool: ToolPage }
+const { tool } = Astro.props;
+const w = tool.widget as RegexWidget; // this component only renders regex tools
+
+const apiBase = import.meta.env.PUBLIC_API_BASE ?? '';
+const endpoint = `${apiBase}/api/${tool.api.group}`;
+
+const ALL_FLAGS = [
+  ['IGNORECASE', 'IGNORECASE (i) — case-insensitive'],
+  ['MULTILINE', 'MULTILINE (m) — ^ $ match each line'],
+  ['DOTALL', 'DOTALL (s) — . matches newlines'],
+  ['VERBOSE', 'VERBOSE (x) — allow whitespace/comments'],
+  ['ASCII', 'ASCII (a) — \\w \\d \\s ASCII-only'],
+];
+
+const cfg = {
+  endpoint,
+  test: tool.api.test,
+  mode: w.mode,
+  patternDefault: w.patternDefault,
+  flagsDefault: w.flagsDefault,
+  testDefault: w.testDefault,
+  replaceDefault: w.replaceDefault ?? '',
+};
+---
+
+<section class="calc regex-calc" aria-label="Regex tester">
+  <label class="calc-label" for="rx-pattern">Regular expression (Python <code>re</code>)</label>
+  <input id="rx-pattern" class="rx-input" type="text" spellcheck="false" autocapitalize="off" autocomplete="off" value={w.patternDefault} />
+
+  <fieldset class="rx-flags">
+    <legend>Flags</legend>
+    {ALL_FLAGS.map(([f, label]) => (
+      <label class="rx-flag"><input type="checkbox" value={f} checked={w.flagsDefault.includes(f)} /> {label}</label>
+    ))}
+  </fieldset>
+
+  {w.mode === 'replace' && (
+    <>
+      <label class="calc-label" for="rx-replace">Replacement (use <code>\1</code>, <code>\g&lt;name&gt;</code>)</label>
+      <input id="rx-replace" class="rx-input" type="text" spellcheck="false" autocapitalize="off" autocomplete="off" value={w.replaceDefault ?? ''} />
+    </>
+  )}
+
+  <label class="calc-label" for="rx-text">Test string</label>
+  <textarea id="rx-text" class="calc-input rx-text" rows="6" spellcheck="false">{w.testDefault}</textarea>
+
+  <div class="calc-actions">
+    <button type="button" id="btn-clear" class="btn btn-ghost">Clear</button>
+    <button type="button" id="btn-calc" class="btn btn-primary">{w.mode === 'replace' ? 'Replace' : 'Test regex'}</button>
+  </div>
+
+  <div id="calc-error" class="calc-error" hidden></div>
+  <div id="calc-result" class="calc-result" hidden></div>
+</section>
+
+<script define:vars={{ cfg }}>
+  const patternEl = document.getElementById('rx-pattern');
+  const replaceEl = document.getElementById('rx-replace');
+  const textEl = document.getElementById('rx-text');
+  const resultEl = document.getElementById('calc-result');
+  const errorEl = document.getElementById('calc-error');
+
+  function selectedFlags() {
+    return [...document.querySelectorAll('.rx-flag input:checked')].map((c) => c.value);
+  }
+
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    resultEl.hidden = true;
+  }
+
+  // Build highlighted HTML from original text + match offsets (non-overlapping, in order).
+  function highlight(text, matches) {
+    let out = '';
+    let cursor = 0;
+    for (const m of matches) {
+      out += esc(text.slice(cursor, m.start));
+      out += `<mark>${esc(text.slice(m.start, m.end)) || '∅'}</mark>`;
+      cursor = m.end;
+    }
+    out += esc(text.slice(cursor));
+    return out.replace(/\n/g, '<br>');
+  }
+
+  function showMatch(data) {
+    errorEl.hidden = true;
+    const matches = data.matches || [];
+    let groupsHtml = '';
+    if (data.numGroups > 0 && matches.length) {
+      const rows = matches.map((m, i) => {
+        const cells = m.groups
+          .map((g) => `<td><span class="g-name">${esc(g.name)}</span> ${g.value === null ? '<em class="g-none">None</em>' : `<code>${esc(g.value)}</code>`}</td>`)
+          .join('');
+        return `<tr><th scope="row">Match ${i + 1}</th><td><code>${esc(m.text)}</code></td>${cells}</tr>`;
+      }).join('');
+      const heads = matches[0].groups.map((g) => `<th>group ${esc(g.name)}</th>`).join('');
+      groupsHtml = `<div class="rx-scroll"><table class="result-table rx-groups"><thead><tr><th></th><th>match</th>${heads}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+    resultEl.innerHTML = `
+      <p class="result-verdict">${esc(data.verdict)}</p>
+      <div class="rx-highlight">${highlight(data.text, matches)}</div>
+      ${groupsHtml}
+    `;
+    resultEl.hidden = false;
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function showReplace(data) {
+    errorEl.hidden = true;
+    resultEl.innerHTML = `
+      <p class="result-verdict">${esc(data.verdict)}</p>
+      <div class="rx-output-head">
+        <span>Result</span>
+        <button type="button" class="btn btn-ghost btn-copy">Copy</button>
+      </div>
+      <pre class="rx-output">${esc(data.result)}</pre>
+    `;
+    resultEl.hidden = false;
+    const btn = resultEl.querySelector('.btn-copy');
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(data.result);
+      btn.textContent = 'Copied!';
+      setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function run() {
+    const pattern = patternEl.value;
+    if (!pattern) return showError('Enter a regular expression pattern.');
+    const body = { test: cfg.test, pattern, flags: selectedFlags(), text: textEl.value };
+    if (cfg.mode === 'replace') body.replacement = replaceEl ? replaceEl.value : '';
+    const btn = document.getElementById('btn-calc');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const res = await fetch(cfg.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || `Server error (${res.status})`);
+      cfg.mode === 'replace' ? showReplace(data) : showMatch(data);
+    } catch (e) {
+      showError(e.message || 'Something went wrong.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  }
+
+  // ── wire up ──
+  document.getElementById('btn-calc').addEventListener('click', run);
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    textEl.value = '';
+    resultEl.hidden = true;
+    errorEl.hidden = true;
+  });
+  // run once on load so visitors see a populated example immediately
+  run();
+</script>
