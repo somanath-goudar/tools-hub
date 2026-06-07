@@ -135,8 +135,91 @@ def readability(text):
     }
 
 
+# Common English stop words excluded from the keyword-density ranking.
+_STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "if", "then", "of", "to", "in", "on",
+    "at", "for", "with", "as", "by", "is", "are", "was", "were", "be", "been",
+    "being", "it", "its", "this", "that", "these", "those", "i", "you", "he",
+    "she", "we", "they", "them", "his", "her", "their", "our", "your", "my",
+    "me", "us", "him", "from", "so", "not", "no", "do", "does", "did", "have",
+    "has", "had", "will", "would", "can", "could", "should", "may", "might",
+    "there", "here", "what", "which", "who", "when", "where", "how", "all",
+    "any", "each", "than", "too", "very", "just", "about", "into", "over",
+    "up", "out", "off", "down", "also",
+}
+
+_PARA_RE = re.compile(r"\n\s*\n")
+
+
+def count(text):
+    raw = text or ""
+    if not raw.strip():
+        raise ValueError("Please enter some text to count.")
+
+    tokens = raw.split()                       # whitespace-separated "words" (Word-style)
+    n_words = len(tokens)
+    chars_all = len(raw)
+    chars_no_space = len(re.sub(r"\s", "", raw))
+    n_sent = len(_SENT_RE.findall(raw)) or (1 if raw.strip() else 0)
+    paras = [p for p in _PARA_RE.split(raw.strip()) if p.strip()]
+    n_para = len(paras) or (1 if raw.strip() else 0)
+
+    alpha_words = [w.lower() for w in _WORD_RE.findall(raw)]
+    n_unique = len(set(alpha_words))
+    avg_word_len = (sum(len(w) for w in alpha_words) / len(alpha_words)) if alpha_words else 0.0
+    longest = max(_WORD_RE.findall(raw), key=len) if alpha_words else "—"
+    wps = (n_words / n_sent) if n_sent else 0.0
+
+    read_min = n_words / 230.0
+    read_secs = max(1, round(read_min * 60))
+    rt = f"{read_secs} sec" if read_secs < 60 else f"{read_min:.1f} min"
+    speak_min = n_words / 130.0
+    speak_secs = max(1, round(speak_min * 60))
+    st = f"{speak_secs} sec" if speak_secs < 60 else f"{speak_min:.1f} min"
+
+    # keyword density: most frequent non-trivial words
+    freq = {}
+    for w in alpha_words:
+        if len(w) > 2 and w not in _STOPWORDS:
+            freq[w] = freq.get(w, 0) + 1
+    top = sorted(freq.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+
+    rows = [
+        ["Words", f"{n_words:,}"],
+        ["Characters (with spaces)", f"{chars_all:,}"],
+        ["Characters (no spaces)", f"{chars_no_space:,}"],
+        ["Sentences", f"{n_sent:,}"],
+        ["Paragraphs", f"{n_para:,}"],
+        ["Unique words", f"{n_unique:,}"],
+        ["Avg word length", f"{avg_word_len:.1f} chars"],
+        ["Longest word", longest],
+        ["Avg words / sentence", round(wps, 1)],
+        ["Reading time", rt],
+        ["Speaking time", st],
+    ]
+    for i, (w, c) in enumerate(top, 1):
+        pct = (c / n_words * 100) if n_words else 0.0
+        rows.append([f"Top keyword #{i}", f"“{w}” — {c}× ({pct:.1f}%)"])
+
+    return {
+        "title": "Text statistics",
+        "headline": {
+            "value": f"{n_words:,} words",
+            "label": "Word count",
+            "sub": f"{chars_all:,} characters · {n_sent:,} sentence{'s' if n_sent != 1 else ''}",
+        },
+        "verdict": (
+            f"{n_words:,} words, {chars_no_space:,} characters (no spaces), {n_sent:,} "
+            f"sentence{'s' if n_sent != 1 else ''} across {n_para:,} "
+            f"paragraph{'s' if n_para != 1 else ''}. About {rt} to read or {st} to read aloud."
+        ),
+        "rows": rows,
+    }
+
+
 TESTS = {
     "readability": lambda p: readability(p.get("text", "")),
+    "count": lambda p: count(p.get("text", "")),
 }
 
 

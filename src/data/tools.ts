@@ -37,6 +37,8 @@ export type TextWidget = {
   kind: 'text';
   placeholder: string;
   sample: string; // one-click "Try sample text"
+  action?: string; // primary-button label (default: "Analyze readability")
+  minWords?: number; // minimum words before submit (default: 10)
 };
 
 export type RegexWidget = {
@@ -872,6 +874,194 @@ export const TOOLS: ToolPage[] = [
       'flesch-kincaid-calculator',
       'gunning-fog-index-calculator',
     ],
+  },
+
+  // ── Writing · Text counts (shared text widget + pure-Python `count` endpoint) ──
+  {
+    cluster: 'writing',
+    slug: 'word-counter',
+    primaryKeyword: 'word counter',
+    title: 'Word Counter — Free Online Word & Character Count',
+    h1: 'Word Counter',
+    metaDescription:
+      'Free online word counter. Paste your text to instantly count words, characters, sentences and paragraphs, with reading time, unique words and keyword density. Nothing stored.',
+    intro:
+      'Count the words in your text instantly. Paste or type below to get an accurate word count along with characters (with and without spaces), sentences, paragraphs, unique words, estimated reading and speaking time, and the most frequent keywords — useful for essays, articles, assignments and posts with length limits.',
+    api: { group: 'text', test: 'count' },
+    widget: {
+      kind: 'text',
+      action: 'Count text',
+      minWords: 1,
+      placeholder: 'Paste or type your text here to count words, characters, sentences and more…',
+      sample:
+        'Good writing is rewriting. The first draft gets your ideas onto the page; every draft after that makes them clearer. Count your words as you edit and you will quickly see where you can tighten a sentence, cut a redundant phrase, or split an overlong paragraph into something a reader can actually follow.',
+    },
+    explainerHtml: `
+      <h2>How this word counter works</h2>
+      <p>A <strong>word counter</strong> tallies the number of words in your text, where a word is any sequence of characters separated by spaces — the same way Microsoft Word and Google Docs count. It updates as you type a live count, and on submit it adds a full breakdown: characters (with and without spaces), sentences, paragraphs, unique words and more.</p>
+      <p>Word and character counts matter whenever there is a limit to hit. Essays and assignments specify a word count; meta descriptions and tweets cap characters; abstracts and bios often have both. Seeing the numbers as you edit makes it easy to trim to length without guesswork.</p>
+      <p>The tool also estimates <strong>reading time</strong> (at about 230 words per minute, typical adult silent reading) and <strong>speaking time</strong> (about 130 words per minute), which is handy for speeches and presentations. Everything is computed instantly and nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How does the word counter count words?',
+        a: 'It counts words as sequences of characters separated by whitespace, the same method word processors use. Hyphenated terms count as one word, and numbers count as words too.',
+      },
+      {
+        q: 'How many pages is my word count?',
+        a: 'As a rough guide, a typical double-spaced page in 12pt font is about 250–300 words, so 1,000 words is roughly 3–4 pages. Exact length depends on font, spacing and margins.',
+      },
+      {
+        q: 'What is the reading time based on?',
+        a: 'Reading time assumes an average adult silent reading speed of about 230 words per minute; speaking time assumes about 130 words per minute. Both are estimates and vary by person and material.',
+      },
+      {
+        q: 'Is my text stored?',
+        a: 'No. Your text is counted in memory and the result returned. Nothing is saved.',
+      },
+    ],
+    related: ['character-counter', 'sentence-counter', 'keyword-density-checker'],
+  },
+  {
+    cluster: 'writing',
+    slug: 'character-counter',
+    primaryKeyword: 'character counter',
+    title: 'Character Counter — Count Characters With & Without Spaces',
+    h1: 'Character Counter',
+    metaDescription:
+      'Free character counter. Paste your text to count characters with and without spaces instantly, plus words, sentences and reading time. Perfect for tweets, meta tags and bios.',
+    intro:
+      'Count the characters in your text instantly, both with and without spaces. Paste or type below to check your length against tweet, SMS, meta description and bio limits — with word, sentence and paragraph counts and reading time included.',
+    api: { group: 'text', test: 'count' },
+    widget: {
+      kind: 'text',
+      action: 'Count characters',
+      minWords: 1,
+      placeholder: 'Paste or type your text here to count characters with and without spaces…',
+      sample:
+        'Meta descriptions should be around 150 to 160 characters so Google shows them in full. This sentence is here to help you see exactly how the character count changes as you add or remove text.',
+    },
+    explainerHtml: `
+      <h2>Why character count matters</h2>
+      <p>A <strong>character counter</strong> reports how many characters your text contains, both <strong>with spaces</strong> (the total length) and <strong>without spaces</strong> (just the visible glyphs). Many platforms enforce character limits, so knowing your exact length saves you from being cut off.</p>
+      <p>Common limits worth remembering:</p>
+      <ul>
+        <li><strong>SEO title tags</strong> — about 60 characters before Google truncates them.</li>
+        <li><strong>Meta descriptions</strong> — roughly 150–160 characters.</li>
+        <li><strong>X / Twitter posts</strong> — 280 characters.</li>
+        <li><strong>SMS</strong> — 160 characters per message segment.</li>
+      </ul>
+      <p>This tool counts both totals and shows word, sentence and paragraph counts alongside, so you can trim to fit any limit. Counting happens instantly in your browser request and nothing is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'Does the character count include spaces?',
+        a: 'It shows both. “Characters (with spaces)” is the total length including spaces and line breaks; “characters (no spaces)” counts only the visible characters. Use whichever your platform’s limit refers to.',
+      },
+      {
+        q: 'How many characters is a tweet?',
+        a: 'A post on X (Twitter) allows 280 characters. This counter shows your character total live so you can stay within the limit.',
+      },
+      {
+        q: 'What is the ideal meta description length?',
+        a: 'Aim for about 150–160 characters so search engines display the full description without cutting it off. Title tags are shorter, around 60 characters.',
+      },
+      {
+        q: 'Is my text stored?',
+        a: 'No. The text is counted in memory and the result returned; nothing is saved.',
+      },
+    ],
+    related: ['word-counter', 'sentence-counter', 'keyword-density-checker'],
+  },
+  {
+    cluster: 'writing',
+    slug: 'sentence-counter',
+    primaryKeyword: 'sentence counter',
+    title: 'Sentence Counter — Count Sentences & Paragraphs Online',
+    h1: 'Sentence & Paragraph Counter',
+    metaDescription:
+      'Free sentence counter. Paste your text to count sentences and paragraphs instantly, plus average words per sentence, words, characters and reading time. Nothing stored.',
+    intro:
+      'Count the sentences and paragraphs in your text instantly. Paste or type below to see how many sentences and paragraphs you have, your average sentence length, and full word and character counts — a quick way to check pacing and structure as you edit.',
+    api: { group: 'text', test: 'count' },
+    widget: {
+      kind: 'text',
+      action: 'Count sentences',
+      minWords: 1,
+      placeholder: 'Paste or type your text here to count sentences and paragraphs…',
+      sample:
+        'Short sentences are punchy. They land. Longer sentences, by contrast, let you develop an idea, add nuance, and guide the reader through a more complex thought without losing them along the way. Mixing the two keeps your writing from feeling either choppy or exhausting.',
+    },
+    explainerHtml: `
+      <h2>Sentences, paragraphs and pacing</h2>
+      <p>A <strong>sentence counter</strong> tells you how many sentences and paragraphs your text contains, plus the <strong>average words per sentence</strong> — one of the strongest signals of how easy your writing is to read. Sentences are detected by terminal punctuation (. ! ?), and paragraphs by blank-line breaks.</p>
+      <p>Average sentence length is a useful editing target. Plain-English guidance suggests an average of <strong>15–20 words per sentence</strong>; much higher and readers start to lose the thread. Varying sentence length — mixing short, punchy sentences with longer ones — keeps prose from feeling monotonous, whether choppy or exhausting.</p>
+      <p>Use this tool to spot run-on sentences, check that paragraphs aren’t becoming walls of text, and keep your pacing tight. All counts are computed instantly and nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'How are sentences counted?',
+        a: 'Sentences are counted by terminal punctuation marks — periods, exclamation marks and question marks. Abbreviations and decimals can occasionally affect the count slightly, but it is accurate for ordinary prose.',
+      },
+      {
+        q: 'What is a good average sentence length?',
+        a: 'For general readability, aim for an average of about 15–20 words per sentence. Mixing shorter and longer sentences keeps writing engaging while staying easy to follow.',
+      },
+      {
+        q: 'How are paragraphs detected?',
+        a: 'Paragraphs are separated by blank lines (a line break with an empty line between blocks of text). Each non-empty block counts as one paragraph.',
+      },
+      {
+        q: 'Is my text stored?',
+        a: 'No. Everything is counted in memory and nothing you enter is saved.',
+      },
+    ],
+    related: ['word-counter', 'character-counter', 'keyword-density-checker'],
+  },
+  {
+    cluster: 'writing',
+    slug: 'keyword-density-checker',
+    primaryKeyword: 'keyword density checker',
+    title: 'Keyword Density Checker — Free Word Frequency Tool',
+    h1: 'Keyword Density Checker',
+    metaDescription:
+      'Free keyword density checker. Paste your text to see your most frequent keywords and their density percentage, plus word, sentence and character counts. Great for SEO content.',
+    intro:
+      'Check the keyword density of your content in seconds. Paste your text to see the most frequently used words, how many times each appears, and its density as a percentage of total words — so you can confirm your target keywords are present without over-stuffing.',
+    api: { group: 'text', test: 'count' },
+    widget: {
+      kind: 'text',
+      action: 'Check density',
+      minWords: 1,
+      placeholder: 'Paste your article or page copy here to check keyword density…',
+      sample:
+        'Keyword density is the percentage of times a keyword appears in your content relative to the total word count. Good SEO content uses its target keyword naturally, without keyword stuffing. Aim for a keyword density that reads smoothly to a human, because modern search engines reward helpful content over repetition.',
+    },
+    explainerHtml: `
+      <h2>Using keyword density the right way</h2>
+      <p><strong>Keyword density</strong> is how often a word appears in your text as a percentage of the total word count. A density of 2% means the word makes up 2 of every 100 words. This checker ranks your most frequent meaningful words (ignoring common stop words like “the” and “and”) and shows each one’s count and density.</p>
+      <p>Density is a useful sanity check, not a target to game. The old advice to hit a specific percentage is outdated — modern search engines reward content that reads naturally and answers the query, and they penalise obvious <strong>keyword stuffing</strong>. As a loose guideline, a primary keyword appearing around <strong>1–2%</strong> of the time usually signals relevance without sounding repetitive.</p>
+      <p>Use this tool to confirm your target term actually appears (and in related forms), to catch a word you’ve unintentionally overused, and to find the natural themes in a draft. All analysis happens instantly and nothing you paste is stored.</p>
+    `,
+    faq: [
+      {
+        q: 'What is a good keyword density?',
+        a: 'There is no exact ideal, but around 1–2% for a primary keyword is a reasonable, natural-sounding range. Focus on writing for readers; modern search engines reward helpful content rather than a specific density figure.',
+      },
+      {
+        q: 'What is keyword stuffing?',
+        a: 'Keyword stuffing is repeating a keyword unnaturally often to try to manipulate rankings. It hurts readability and can trigger search-engine penalties, so it is best avoided.',
+      },
+      {
+        q: 'Why are words like “the” and “and” excluded?',
+        a: 'Common stop words appear in almost all text and carry little meaning, so they are filtered out of the ranking to surface the keywords that actually describe your content.',
+      },
+      {
+        q: 'Is my text stored?',
+        a: 'No. The analysis runs in memory and the result is returned; nothing you paste is saved.',
+      },
+    ],
+    related: ['word-counter', 'character-counter', 'sentence-counter'],
   },
 
   // ── Developer · Regex (one shared regex widget + stdlib `re` endpoint) ──

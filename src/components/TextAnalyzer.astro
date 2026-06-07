@@ -8,11 +8,14 @@ const w = tool.widget as TextWidget; // this component only renders text tools
 const apiBase = import.meta.env.PUBLIC_API_BASE ?? '';
 const endpoint = `${apiBase}/api/${tool.api.group}`;
 
+const action = w.action ?? 'Analyze readability';
 const cfg = {
   endpoint,
   test: tool.api.test,
   placeholder: w.placeholder,
   sample: w.sample,
+  action,
+  minWords: w.minWords ?? 10,
 };
 ---
 
@@ -24,7 +27,7 @@ const cfg = {
   <div class="calc-actions">
     <button type="button" id="btn-sample" class="btn btn-ghost">Try sample text</button>
     <button type="button" id="btn-clear" class="btn btn-ghost">Clear</button>
-    <button type="button" id="btn-calc" class="btn btn-primary">Analyze readability</button>
+    <button type="button" id="btn-calc" class="btn btn-primary">{action}</button>
   </div>
 
   <div id="calc-error" class="calc-error" hidden></div>
@@ -100,12 +103,16 @@ const cfg = {
 
   async function analyze() {
     const text = input.value;
-    if (countWords(text) < 10) {
-      return showError('Please paste at least 10 words for a reliable readability score.');
+    if (countWords(text) < cfg.minWords) {
+      return showError(
+        cfg.minWords >= 10
+          ? `Please paste at least ${cfg.minWords} words for a reliable result.`
+          : 'Please enter some text first.'
+      );
     }
     const btn = document.getElementById('btn-calc');
     btn.disabled = true;
-    btn.textContent = 'Analyzing…';
+    btn.textContent = 'Working…';
     try {
       const res = await fetch(cfg.endpoint, {
         method: 'POST',
@@ -119,7 +126,7 @@ const cfg = {
       showError(e.message || 'Something went wrong.');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Analyze readability';
+      btn.textContent = cfg.action;
     }
   }
 
